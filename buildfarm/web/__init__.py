@@ -597,7 +597,7 @@ class ViewRecentBuildsPage(BuildFarmPage):
 
         yield "<div id='recent-builds' class='build-section'>"
         yield "<h2>Recent builds of %s (%s branch %s)</h2>" % (tree, t.scm, t.branch)
-        yield "<table class='real'>"
+        yield "<table class='newtable'>"
         yield "<thead>"
         yield "<tr>"
         yield "<th><a href='%s;sortby=age' title='Sort by build age'>Age</a></th>" % sorturl
@@ -633,7 +633,7 @@ class ViewHostPage(BuildFarmPage):
         yield "<div class='host summary'>"
         yield "<a id='host' name='host'/>"
         yield "<h3>%s - %s</h3>" % (host.name, host.platform.encode("utf-8"))
-        yield "<table class='real'>"
+        yield "<table class='newtable'>"
         yield "<thead><tr><th>Target</th><th>Build<br/>Revision</th><th>Build<br />Age</th><th>Status<br />config/build<br />install/test</th><th>Warnings</th></tr></thead>"
         yield "<tbody>"
 
@@ -699,7 +699,7 @@ class ViewHostPage(BuildFarmPage):
 
         yield "<div class='build-section' id='dead-hosts'>"
         yield "<h2>Dead Hosts:</h2>"
-        yield "<table class='real'>"
+        yield "<table class='newtable'>"
         yield "<thead><tr><th>Host</th><th>OS</th><th>Min Age</th></tr></thead>"
         yield "<tbody>"
 
@@ -758,9 +758,9 @@ class ViewSummaryPage(BuildFarmPage):
 
         (host_count, broken_count, panic_count) = self._get_counts()
 
-        yield "<div id='build-counts' class='build-section'>"
+	yield "<div id='build-counts' class='build-section'>"
         yield "<h2>Build counts:</h2>"
-        yield "<table class='real'>"
+        yield "<table class='newtable'>"
         yield "<thead><tr><th>Tree</th><th>Total</th><th>Broken</th><th>Panic</th><th>Test coverage</th></tr></thead>"
         yield "<tbody>"
 
@@ -800,6 +800,8 @@ class ViewSummaryPage(BuildFarmPage):
 
         yield "</tbody></table>"
         yield "</div>"
+ 
+
 
 
 class HistoryPage(BuildFarmPage):
@@ -954,22 +956,29 @@ class BuildFarmApp(object):
         yield "    <meta name='description' contents='Home of the Samba Build Farm, the automated testing facility.'/>\n"
         yield "    <meta name='robots' contents='noindex'/>"
         yield "    <link rel='stylesheet' href='/build_farm.css' type='text/css' media='all'/>"
-        yield "    <link rel='stylesheet' href='//www.samba.org/samba/style/common.css' type='text/css' media='all'/>"
-        yield "    <link rel='shortcut icon' href='//www.samba.org/samba/images/favicon.ico'/>"
+#causing some problem in positioning
+#        yield "    <link rel='stylesheet' href='http://www.samba.org/samba/style/common.css' type='text/css' media='all'/>"
+        yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/images/favicon.ico'/>"
+        yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
+	yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='http://www.samba.org/samba/style/2010/grey/screen.css'/>"
+	yield "    <link rel='stylesheet' type='text/css' media='print' href='http://www.samba.org/samba/style/2010/grey/print.css'/> "
         yield "  </head>"
         yield "<body>"
 
-        yield util.FileLoad(os.path.join(webdir, "header2.html"))
+#        yield util.FileLoad(os.path.join(webdir, "header2.html"))
 
         tree = get_param(form, "tree")
         host = get_param(form, "host")
         compiler = get_param(form, "compiler")
         yield "".join(self.main_menu(tree, host, compiler))
-        yield util.FileLoad(os.path.join(webdir, "header3.html"))
+        yield util.FileLoad(os.path.join(webdir, "changes/bannernav.html"))
         yield "".join(lines)
-        yield util.FileLoad(os.path.join(webdir, "footer.html"))
-        yield "</body>"
-        yield "</html>"
+	yield util.FileLoad(os.path.join(webdir, "changes/right.html"))
+        yield "".join(lines)
+        yield util.FileLoad(os.path.join(webdir, "changes/sitemap.html"))
+        yield "".join(lines)
+	yield util.FileLoad(os.path.join(webdir, "changes/closingtags.html"))
+        
 
     def __call__(self, environ, start_response):
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
@@ -1153,3 +1162,5 @@ if __name__ == '__main__':
     httpd = make_server(address, int(port), standaloneApp)
     print "Serving on %s:%d..." % (address, int(port))
     httpd.serve_forever()
+
+

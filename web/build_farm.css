@@ -63,6 +63,8 @@ a + div.action.status {margin-left: 0.5em;}
 	text-decoration: underline;
 }
 
+
+
 /* generically, status correspond to the ok/ok/ok/ok strings */
 .status.passed { 
         color: rgb(0, 128, 0);
@@ -163,22 +165,7 @@ div.build-section {
 }
 
 /* Styles for main content (center column) */
-#content>.center {
-	position:absolute;
-	top:100px;
-	left:175px;
-	margin:0;
-}
-.center { 
-        margin:100px 10px 0 175px;
-	padding-top:30px;
-	padding-left:35px;
-	padding-bottom:50px;
-	padding-right:15px;
-	background-color:#FFF;
-	border-left:1px solid #FFFF64;
-	border-right:1px solid #FFFF64;
-}
+
 
 #logo>.build_logo {
 	background-image:url(build_logo.png);
@@ -225,3 +212,38 @@ div.build-section {
 .reason {
 	font-weight: bold;
 }
+
+
+
+/*changes new look*/
+table.newtable th,
+table.newtable td {
+        border: 1px solid black;
+        padding: 2px;
+}
+table.newtable { 
+        border: 1px solid black;        
+}
+
+
+#content>.center {
+	position:absolute;
+	top:150px;
+	left:175px;
+	margin:0;
+}
+.center { 
+	position:absolute;
+	top:150px;
+	left:175px;
+	margin:0;
+        /*margin:100px 10px 0 175px;
+	padding-top:30px;
+	padding-left:35px;
+	padding-bottom:50px;
+	padding-right:15px;
+	background-color:#FFF;
+	border-left:1px solid #FFFF64;
+	border-right:1px solid #FFFF64;*/
+}
+
