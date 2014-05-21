@@ -1,0 +1,81 @@
+table.newtable{
+	margin-left:auto; 
+    	margin-right:auto;
+}
+table.newtable,
+table.newtable th,
+table.newtable td {
+        border: 1px solid black;
+        padding: 2px;
+        text-align:center;
+        vertical-align:center;
+	
+}
+
+/*center box includes sitemap*/
+.newcontent{
+    position:absolute;
+    top:166px;
+    left:166px;
+    right:266px;
+    float:left;
+    text-align:justify;
+}
+
+.newcontent pre{
+     overflow:auto;
+}
+
+/*sitemap*/
+#bd #newsitemap {
+	margin-top:24px;     
+}
+
+/*removes width applicable for entire page*/
+#page,
+#newpagestart {
+	background-image: url(http://www.samba.org/samba/style/2010/grey/bg.jpg);
+	background-position: 0 0;
+	background-repeat: no-repeat;
+}
+
+
+#newpagestart h1 {
+	color: #c90000;
+	font-size: 46px;
+	font-weight: normal;
+	font-family: Georgia, serif;
+	line-height: 58px;
+	margin: 0;
+	padding: 0;
+}
+
+#newpagestart h2 {
+	color: #666666;
+	font-size: 24px;
+	font-weight: normal;
+	line-height: 32px;
+	margin: 0 0 16px;
+}
+
+
+#newpagestart h3 {
+	color: #c90000;
+	font-size: 24px;
+	font-weight: normal;
+	line-height: 28px;
+	margin: 0;
+}
+
+/*new banner*/
+#hd #newbannerstart {
+	float: right;
+	height: 139px;
+	width: 100%;
+	background-image: url(newheader.png);
+	background-position: 0px 0px;
+	background-repeat: no-repeat;
+
+}
+
+

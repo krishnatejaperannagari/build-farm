@@ -415,7 +415,7 @@ class ViewBuildPage(BuildFarmPage):
 
         yield "<h2>Older builds:</h2>\n"
 
-        yield "<table class='real'>\n"
+        yield "<table class='newtable'>\n"
         yield "<thead><tr><th>Revision</th><th>Status</th><th>Age</th></tr></thead>\n"
         yield "<tbody>\n"
 
@@ -474,7 +474,7 @@ class ViewBuildPage(BuildFarmPage):
         if os.path.exists(host_web_file):
             yield util.FileLoad(host_web_file)
 
-        yield "<table class='real'>\n"
+        yield "<table class='newtable'>\n"
         yield "<tr><td>Host:</td><td><a href='%s?function=View+Host;host=%s;tree=%s;"\
               "compiler=%s#'>%s</a> - %s</td></tr>\n" %\
                 (myself, build.host, build.tree, build.compiler, build.host, self.buildfarm.hostdb[build.host].platform.encode("utf-8"))
@@ -956,6 +956,7 @@ class BuildFarmApp(object):
         yield "    <meta name='description' contents='Home of the Samba Build Farm, the automated testing facility.'/>\n"
         yield "    <meta name='robots' contents='noindex'/>"
         yield "    <link rel='stylesheet' href='/build_farm.css' type='text/css' media='all'/>"
+	yield "    <link rel='stylesheet' href='/newstyles.css' type='text/css' media='all'/>"
 #causing some problem in positioning
 #        yield "    <link rel='stylesheet' href='http://www.samba.org/samba/style/common.css' type='text/css' media='all'/>"
         yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/images/favicon.ico'/>"
@@ -965,18 +966,14 @@ class BuildFarmApp(object):
         yield "  </head>"
         yield "<body>"
 
-#        yield util.FileLoad(os.path.join(webdir, "header2.html"))
-
         tree = get_param(form, "tree")
         host = get_param(form, "host")
         compiler = get_param(form, "compiler")
         yield "".join(self.main_menu(tree, host, compiler))
         yield util.FileLoad(os.path.join(webdir, "changes/bannernav.html"))
         yield "".join(lines)
-	yield util.FileLoad(os.path.join(webdir, "changes/right.html"))
-        yield "".join(lines)
         yield util.FileLoad(os.path.join(webdir, "changes/sitemap.html"))
-        yield "".join(lines)
+	yield util.FileLoad(os.path.join(webdir, "changes/right.html"))
 	yield util.FileLoad(os.path.join(webdir, "changes/closingtags.html"))
         
 

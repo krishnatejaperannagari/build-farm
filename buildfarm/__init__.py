@@ -158,12 +158,10 @@ class BuildFarm(object):
     def _get_store(self):
         if self.store is not None:
             return self.store
-	"""if db is not created automaically when you install buildfarm for first time uncomment ths following code and commentout db path in main code once db is set up revert the code to previous state
 	db_dir_path = os.path.join(self.path, "db")
-        os.mkdir(db_dir_path)
+        if not os.path.isdir(db_dir_path):
+            os.mkdir(db_dir_path)
         db_path = os.path.join(db_dir_path, "hostdb.sqlite")
-	"""
-        db_path = os.path.join(self.path,"db", "hostdb.sqlite")
         db = create_database("sqlite:%s?timeout=%f" % (db_path, self.timeout))
         self.store = Store(db)
         setup_schema(self.store)
