@@ -928,22 +928,34 @@ class BuildFarmApp(object):
         """main page"""
 
         yield "<form method='GET'>\n"
-        yield "<div id='build-menu'>\n"
+        yield "<div id='newbuildmenu'>\n"
         host_dict = {}
         for h in self.buildfarm.hostdb.hosts():
-            host_dict[h.name] = "%s -- %s" % (h.platform.encode("utf-8"), h.name)
+        	host_dict[h.name] = "%s-%s" % (h.platform.encode("utf-8"), h.name)
         yield "".join(select("host", host_dict, default=host))
+	yield "<br/>\n<br/>\n"
+
+#test for length as local buildfarm has no host info associated
+#	testdict={}
+#	testdict['IRIX irix 6.5 10070056 IP32']= 'IRIX irix 6.5 10070056 IP32-SerNet-IRIX'
+#	testdict['SerNet-IRIX']= 'SerNet-IRIX'
+#	yield "".join(select("testdict", testdict, default='none'))
+#	yield "<br/>\n<br/>\n"
+
         tree_dict = {}
         for t in self.buildfarm.trees.values():
             tree_dict[t.name] = "%s:%s" % (t.name, t.branch)
         yield "".join(select("tree", tree_dict, default=tree))
+	yield "<br/>\n<br/>\n"
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
-        yield "<br/>\n"
-        yield "<input type='submit' name='function' value='View Build'/>\n"
-        yield "<input type='submit' name='function' value='View Host'/>\n"
-        yield "<input type='submit' name='function' value='Recent Checkins'/>\n"
-        yield "<input type='submit' name='function' value='Summary'/>\n"
-        yield "<input type='submit' name='function' value='Recent Builds'/>\n"
+        yield "&nbsp"
+        yield "<input type='submit' name='function' value='View Build'/>"
+	yield "<br/>\n<br/>\n"
+        yield "<input type='submit' name='function' value='View Host'/>&nbsp&nbsp&nbsp"
+        yield "<input type='submit' name='function' value='Recent Checkins'/>"
+	yield "<br/>\n<br/>\n"
+        yield "&nbsp&nbsp&nbsp<input type='submit' name='function' value='Summary'/>&nbsp&nbsp&nbsp"
+        yield "<input type='submit' name='function' value='Recent Builds'/>"
         yield "</div>\n"
         yield "</form>\n"
 
