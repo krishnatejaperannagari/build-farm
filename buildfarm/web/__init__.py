@@ -761,7 +761,7 @@ class ViewSummaryPage(BuildFarmPage):
 	yield "<div id='build-counts' class='build-section'>"
         yield "<h2>Build counts:</h2>"
         yield "<table class='newtable'>"
-        yield "<thead><tr><th>Tree</th><th>Total</th><th>Broken</th><th>Panic</th><th>Test coverage</th></tr></thead>"
+        yield "<thead><tr><th>Tree</th><th>Total</th><th>Broken</th><th>Panic</th><th>Test coverage</th><th></th></tr></thead>"
         yield "<tbody>"
 
         for tree in sorted(self.buildfarm.trees.keys()):
@@ -800,8 +800,6 @@ class ViewSummaryPage(BuildFarmPage):
 
         yield "</tbody></table>"
         yield "</div>"
- 
-
 
 
 class HistoryPage(BuildFarmPage):
@@ -931,9 +929,9 @@ class BuildFarmApp(object):
         yield "<div id='newbuildmenu'>\n"
         host_dict = {}
         for h in self.buildfarm.hostdb.hosts():
-        	host_dict[h.name] = "%s-%s" % (h.platform.encode("utf-8"), h.name)
+                 host_dict[h.name] = "%s-%s" % (h.platform.encode("utf-8"), h.name)
         yield "".join(select("host", host_dict, default=host))
-	yield "<br/>\n<br/>\n"
+        yield "<br/>\n<br/>\n"
 
 #test for length as local buildfarm has no host info associated
 #	testdict={}
@@ -944,16 +942,16 @@ class BuildFarmApp(object):
 
         tree_dict = {}
         for t in self.buildfarm.trees.values():
-            tree_dict[t.name] = "%s:%s" % (t.name, t.branch)
+                tree_dict[t.name] = "%s:%s" % (t.name, t.branch)
         yield "".join(select("tree", tree_dict, default=tree))
-	yield "<br/>\n<br/>\n"
+        yield "<br/>\n<br/>\n"
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
         yield "&nbsp"
         yield "<input type='submit' name='function' value='View Build'/>"
-	yield "<br/>\n<br/>\n"
+        yield "<br/>\n<br/>\n"
         yield "<input type='submit' name='function' value='View Host'/>&nbsp&nbsp&nbsp"
         yield "<input type='submit' name='function' value='Recent Checkins'/>"
-	yield "<br/>\n<br/>\n"
+        yield "<br/>\n<br/>\n"
         yield "&nbsp&nbsp&nbsp<input type='submit' name='function' value='Summary'/>&nbsp&nbsp&nbsp"
         yield "<input type='submit' name='function' value='Recent Builds'/>"
         yield "</div>\n"
@@ -968,13 +966,13 @@ class BuildFarmApp(object):
         yield "    <meta name='description' contents='Home of the Samba Build Farm, the automated testing facility.'/>\n"
         yield "    <meta name='robots' contents='noindex'/>"
         yield "    <link rel='stylesheet' href='/build_farm.css' type='text/css' media='all'/>"
-	yield "    <link rel='stylesheet' href='/newstyles.css' type='text/css' media='all'/>"
+        yield "    <link rel='stylesheet' href='/newstyles.css' type='text/css' media='all'/>"
 #causing some problem in positioning
 #        yield "    <link rel='stylesheet' href='http://www.samba.org/samba/style/common.css' type='text/css' media='all'/>"
         yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/images/favicon.ico'/>"
         yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
-	yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='http://www.samba.org/samba/style/2010/grey/screen.css'/>"
-	yield "    <link rel='stylesheet' type='text/css' media='print' href='http://www.samba.org/samba/style/2010/grey/print.css'/> "
+        yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='http://www.samba.org/samba/style/2010/grey/screen.css'/>"
+        yield "    <link rel='stylesheet' type='text/css' media='print' href='http://www.samba.org/samba/style/2010/grey/print.css'/> "
         yield "  </head>"
         yield "<body>"
 
@@ -985,9 +983,8 @@ class BuildFarmApp(object):
         yield util.FileLoad(os.path.join(webdir, "changes/bannernav.html"))
         yield "".join(lines)
         yield util.FileLoad(os.path.join(webdir, "changes/sitemap.html"))
-	yield util.FileLoad(os.path.join(webdir, "changes/right.html"))
-	yield util.FileLoad(os.path.join(webdir, "changes/closingtags.html"))
-        
+        yield util.FileLoad(os.path.join(webdir, "changes/right.html"))
+        yield util.FileLoad(os.path.join(webdir, "changes/closingtags.html"))             
 
     def __call__(self, environ, start_response):
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
@@ -1171,5 +1168,3 @@ if __name__ == '__main__':
     httpd = make_server(address, int(port), standaloneApp)
     print "Serving on %s:%d..." % (address, int(port))
     httpd.serve_forever()
-
-

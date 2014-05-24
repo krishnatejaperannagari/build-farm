@@ -158,7 +158,7 @@ class BuildFarm(object):
     def _get_store(self):
         if self.store is not None:
             return self.store
-	db_dir_path = os.path.join(self.path, "db")
+        db_dir_path = os.path.join(self.path, "db")
         if not os.path.isdir(db_dir_path):
             os.mkdir(db_dir_path)
         db_path = os.path.join(db_dir_path, "hostdb.sqlite")
