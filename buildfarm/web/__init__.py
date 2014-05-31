@@ -192,20 +192,20 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
-        return "".join(make_collapsible_html('action', actionName, output, self.indice, status))
+        return "".join(log_collapsible_html('action', actionName, output, self.indice, status))
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
+        return "".join(log_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
+        return "".join(log_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
 
     def _format_pretestsuite(self, m):
         self.indice += 1
-        return m.group(1)+"".join(make_collapsible_html('pretest', 'Pretest infos', m.group(2), self.indice, 'ok'))+"\n"+m.group(3)
+        return m.group(1)+"".join(log_collapsible_html('pretest', 'Pretest infos', m.group(2), self.indice, 'ok'))+"\n"+m.group(3)
 
     def _format_testsuite(self, m):
         testName = m.group(1)
@@ -220,11 +220,11 @@ class LogPrettyPrinter(object):
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
-        return "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
+        return "".join(log_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
 
     def _format_test(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
+        return "".join(log_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
@@ -261,9 +261,9 @@ class LogPrettyPrinter(object):
             buf = "%s\n<A href='#%s'>%s</A>" % (buf, tst[1], tst[0])
 
         if not buf == "":
-            divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
+            divhtml = "".join(log_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
             log = re.sub("Running action\s+test", divhtml, log)
-        return "<pre>%s</pre>" % log
+        return "<pre class='prestyle'>%s</pre>" % log
 
 
 def print_log_pretty(log):
@@ -327,6 +327,38 @@ def print_log_cc_checker(input):
     return output
 
 
+def log_collapsible_html(type, title, output, id, status=""):
+    """generate html for a collapsible section of log as it is already in pre
+
+    :param type: the logical type of it. e.g. "test" or "action"
+    :param title: the title to be displayed
+    """
+    if status.lower() in ("", "failed"):
+        icon = '/icon_hide_16.png'
+    else:
+        icon = '/icon_unhide_16.png'
+
+    # trim leading and trailing whitespace
+    output = output.strip()
+
+    # note that we may be inside a <pre>, so we don't put any extra whitespace
+    # in this html
+    yield "</pre>"
+    yield "<br>"
+    yield "<div class='%s unit %s' id='%s-%s'>" % (type, status, type, id)
+    yield "<a name='lnk-%s-%s' href=\"javascript:handle('%s');\">" % (type, id, id)
+    yield "<img id='img-%s' name='img-%s' alt='%s' src='%s' />" % (id, id, status, icon)
+    yield "<div class='%s title'>%s</div></a>" % (type, title)
+    yield "<div class='%s status %s'>%s</div>" % (type, status, status)
+    yield "<div class='%s output' id='output-%s'>" % (type, id)
+    yield "<br>"
+    if output:
+        yield "<pre class='prestyle'>%s</pre>" % (output,)
+    yield "</div></div>"
+    yield "<br>"
+    yield "<pre class='prestyle'>"
+
+
 def make_collapsible_html(type, title, output, id, status=""):
     """generate html for a collapsible section
 
@@ -349,8 +381,9 @@ def make_collapsible_html(type, title, output, id, status=""):
     yield "<div class='%s title'>%s</div></a>" % (type, title)
     yield "<div class='%s status %s'>%s</div>" % (type, status, status)
     yield "<div class='%s output' id='output-%s'>" % (type, id)
+    yield "<br>"
     if output:
-        yield "<pre>%s</pre>" % (output,)
+        yield "<pre class='prestyle'>%s</pre>" % (output,)
     yield "</div></div>"
 
 
@@ -359,7 +392,7 @@ def web_paths(t, paths):
     if t.scm == "git":
         ret = ""
         for path in paths:
-            ret += " <a href=\"%s/?p=%s;a=history;f=%s%s;h=%s;hb=%s\">%s</a>" % (GITWEB_BASE, t.repo, t.subdir, path, t.branch, t.branch, path)
+            ret += " <a href=\"%s/?p=%s;a=history;f=%s%s;h=%s;hb=%s\">%s</a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp" % (GITWEB_BASE, t.repo, t.subdir, path, t.branch, t.branch, path)
         return ret
     else:
         raise Exception("Unknown scm %s" % t.scm)
@@ -429,7 +462,7 @@ class ViewBuildPage(BuildFarmPage):
                 build_link(myself, old_build),
                 util.dhm_time(old_build.age))
 
-        yield "</tbody></table>\n"
+        yield "</tbody></table><br>\n"
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
@@ -489,7 +522,7 @@ class ViewBuildPage(BuildFarmPage):
             yield "<tr><td>CFLAGS:</td><td>%s</td></tr>\n" % cflags
         if config is not None:
             yield "<tr><td>configure options:</td><td>%s</td></tr>\n" % config
-        yield "</table>\n"
+        yield "</table><br>\n"
 
         yield "".join(self.show_oldrevs(myself, build, build.host, build.compiler, limit))
 
@@ -523,15 +556,19 @@ class ViewBuildPage(BuildFarmPage):
             # allow them to wrap in some way?
             if err == "":
                 yield "<h2>No error log available</h2>\n"
+                yield "<br>"
             else:
                 yield "<h2>Error log:</h2>"
                 yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
+                yield "<br>"
 
             if log is None:
                 yield "<h2>No build log available</h2>"
+                yield "<br>"
             else:
                 yield "<h2>Build log:</h2>\n"
                 yield print_log_pretty(log)
+                yield "<br>"
 
             yield "<p><small>Some of the above icons derived from the <a href='https://www.gnome.org'>Gnome Project</a>'s stock icons.</small></p>"
             yield "</div>"
@@ -541,14 +578,18 @@ class ViewBuildPage(BuildFarmPage):
                   " view'>Enhanced View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
             if err == "":
                 yield "<h2>No error log available</h2>"
+                yield "<br>"
             else:
                 yield '<h2>Error log:</h2>\n'
-                yield '<div id="errorLog"><pre>%s</pre></div>' % err
+                yield '<div id="errorLog"><pre class="prestyle">%s</pre></div>' % err
+                yield "<br>"
             if log == "":
                 yield '<h2>No build log available</h2>'
+                yield "<br>"
             else:
                 yield '<h2>Build log:</h2>\n'
-                yield '<div id="buildLog"><pre>%s</pre></div>' % log
+                yield '<div id="buildLog"><pre class="prestyle">%s</pre></div>' % log
+                yield "<br>"
 
         yield '</div>'
 
@@ -630,9 +671,10 @@ class ViewRecentBuildsPage(BuildFarmPage):
 class ViewHostPage(BuildFarmPage):
 
     def _render_build_list_header(self, host):
-        yield "<div class='host summary'>"
+        yield "<div>"
         yield "<a id='host' name='host'/>"
-        yield "<h3>%s - %s</h3>" % (host.name, host.platform.encode("utf-8"))
+        yield "<h2>%s - %s</h2>" % (host.name, host.platform.encode("utf-8"))
+        yield "<br>"
         yield "<table class='newtable'>"
         yield "<thead><tr><th>Target</th><th>Build<br/>Revision</th><th>Build<br />Age</th><th>Status<br />config/build<br />install/test</th><th>Warnings</th></tr></thead>"
         yield "<tbody>"
@@ -827,9 +869,10 @@ class HistoryPage(BuildFarmPage):
             <span class=\"html\"><a href=\"%s?function=diff;tree=%s;date=%s;%s\">show diffs</a></span>
         <br />
             <span class=\"text\"><a href=\"%s?function=text_diff;tree=%s;date=%s;%s\">download diffs</a></span>
-            <br />
             <div class=\"history_log_message\">
-                <pre>%s</pre>
+                <br>
+                <pre class='prestyle'>%s</pre>
+                <br>
             </div>
         </div>
         <div class=\"author\">
@@ -859,8 +902,26 @@ class HistoryPage(BuildFarmPage):
         if builds:
             yield "<div class=\"builds\">\n"
             yield "<span class=\"label\">Builds: </span>\n"
+            yield "<br>"
+            yield "<table class=\"buildtable\">"
+            count=1
             for build in builds:
+                if count == 1:
+                    yield "<tr>"
+                yield "<td>"
                 yield "%s(%s) " % (build_link(myself, build), host_link(myself, build.host))
+                yield "</td>"
+                if count == 3:
+                    yield "</tr>"
+                    count = 1
+                else:
+                    count = count + 1
+            if count == 2:
+               yield "<td></td>"
+               yield "<td></td>"
+               yield "</tr>"
+               count = 1
+            yield "</table>"
             yield "</div>\n"
         yield "</div>\n"
 
@@ -882,7 +943,7 @@ class DiffPage(HistoryPage):
         changes = branch.changes_summary(revision)
         yield "".join(self.history_row_html(myself, entry, t, changes))
         diff = highlight(diff, DiffLexer(), HtmlFormatter())
-        yield "<pre>%s</pre>\n" % diff.encode("utf-8")
+        yield "<pre class='prestyle'>%s</pre>\n" % diff.encode("utf-8")
 
 
 class RecentCheckinsPage(HistoryPage):
@@ -904,12 +965,16 @@ class RecentCheckinsPage(HistoryPage):
         yield "<h2>Recent checkins for %s (%s branch %s)</h2>\n" % (
             tree, t.scm, t.branch)
         yield "<form method='GET'>"
+        yield "<div class='newform'>\n"
         yield "Select Author: "
         yield "".join(select(name="author", values=authors, default=author))
+        yield "&nbsp&nbsp"
         yield "<input type='submit' name='sub_function' value='Refresh'/>"
         yield "<input type='hidden' name='tree' value='%s'/>" % tree
         yield "<input type='hidden' name='function', value='Recent Checkins'/>"
+        yield "</div>\n"
         yield "</form>"
+        yield "<br>"
 
         for entry in interesting[:self.limit]:
             changes = branch.changes_summary(entry.revision)
@@ -933,27 +998,19 @@ class BuildFarmApp(object):
         yield "".join(select("host", host_dict, default=host))
         yield "<br/>\n<br/>\n"
 
-#test for length as local buildfarm has no host info associated
-#	testdict={}
-#	testdict['IRIX irix 6.5 10070056 IP32']= 'IRIX irix 6.5 10070056 IP32-SerNet-IRIX'
-#	testdict['SerNet-IRIX']= 'SerNet-IRIX'
-#	yield "".join(select("testdict", testdict, default='none'))
-#	yield "<br/>\n<br/>\n"
-
         tree_dict = {}
         for t in self.buildfarm.trees.values():
                 tree_dict[t.name] = "%s:%s" % (t.name, t.branch)
         yield "".join(select("tree", tree_dict, default=tree))
         yield "<br/>\n<br/>\n"
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
-        yield "&nbsp"
-        yield "<input type='submit' name='function' value='View Build'/>"
+        yield "<input type='submit' name='function' value='View Build' style='position: absolute;right: 3px'/>"
         yield "<br/>\n<br/>\n"
-        yield "<input type='submit' name='function' value='View Host'/>&nbsp&nbsp&nbsp"
-        yield "<input type='submit' name='function' value='Recent Checkins'/>"
+        yield "<input type='submit' name='function' value='View Host'/>"
+        yield "<input type='submit' name='function' value='Recent Checkins' style='position: absolute;right: 3px'/>"
         yield "<br/>\n<br/>\n"
-        yield "&nbsp&nbsp&nbsp<input type='submit' name='function' value='Summary'/>&nbsp&nbsp&nbsp"
-        yield "<input type='submit' name='function' value='Recent Builds'/>"
+        yield "<input type='submit' name='function' value='Summary'/>"
+        yield "<input type='submit' name='function' value='Recent Builds' style='position: absolute;right: 3px'/>"
         yield "</div>\n"
         yield "</form>\n"
 

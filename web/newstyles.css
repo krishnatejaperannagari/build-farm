@@ -6,10 +6,22 @@ table.newtable,
 table.newtable th,
 table.newtable td {
         border: 1px solid black;
-        padding: 2px;
+        padding: 5px;
         text-align:center;
         vertical-align:center;
 	
+}
+ 
+table.buildtable{
+	margin-left:auto; 
+    	margin-right:auto;
+}
+
+table.buildtable td{
+        border: 0px;
+        padding: 10px;
+        text-align:left;
+        vertical-align:center;
 }
 
 /*center box includes sitemap*/
@@ -23,14 +35,13 @@ table.newtable td {
 }
 
 .newcontent pre{
-     overflow:auto;
+    overflow-x:auto;
+    overflow-y:hidden;
 }
 
 /*sitemap*/
 #bd #newsitemap {
 	margin-top:24px;
-
-
 }
 
 /*removes width applicable for entire page*/
@@ -79,6 +90,7 @@ table.newtable td {
 	background-repeat: no-repeat;
 
 }
+
 /*form*/
 #newbuildmenu{
  	position: absolute;
@@ -90,11 +102,47 @@ table.newtable td {
 
 #newbuildmenu select{
  	border: 1px solid #8f9994;
-	background:#d9d9d9;
 	font-size:9px;
 }
 
+.newform input,
 #newbuildmenu input{
- 	border: 1px solid #888888 ;
+	border:1px solid #df0909; -webkit-border-radius: 3px; -moz-border-radius: 3px;border-radius: 3px;font-size:12px;font-family:arial, helvetica, sans-serif; padding: 0px 2px 0px 2px; text-decoration:none; display:inline-block;text-shadow: -1px -1px 0 rgba(0,0,0,0.3);font-weight:bold; color: #FFFFFF;
+	background-color: #f62b2b; background-image: -webkit-gradient(linear, left top, left bottom, from(#f62b2b), to(#d20202));
+	background-image: -webkit-linear-gradient(top, #f62b2b, #d20202);
+ 	background-image: -moz-linear-gradient(top, #f62b2b, #d20202);
+ 	background-image: -ms-linear-gradient(top, #f62b2b, #d20202);
+ 	background-image: -o-linear-gradient(top, #f62b2b, #d20202);
+ 	background-image: linear-gradient(to bottom, #f62b2b, #d20202);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#f62b2b, endColorstr=#d20202);
+}
 
+.newform input:hover,
+#newbuildmenu input:hover{
+ 	border:1px solid #b30808;
+ 	background-color: #e40a0a; background-image: -webkit-gradient(linear, left top, left bottom, from(#e40a0a), to(#9f0202));
+ 	background-image: -webkit-linear-gradient(top, #e40a0a, #9f0202);
+ 	background-image: -moz-linear-gradient(top, #e40a0a, #9f0202);
+ 	background-image: -ms-linear-gradient(top, #e40a0a, #9f0202);
+ 	background-image: -o-linear-gradient(top, #e40a0a, #9f0202);
+ 	background-image: linear-gradient(to bottom, #e40a0a, #9f0202);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#e40a0a, endColorstr=#9f0202);      
+}
+
+.prestyle::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
+}
+
+.prestyle::-webkit-scrollbar
+{
+	width: 12px;
+	background-color: #F5F5F5;
+}
+
+.prestyle::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #D62929;
 }
