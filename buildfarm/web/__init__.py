@@ -719,44 +719,24 @@ class ViewHostPage(BuildFarmPage):
 
 class ViewSummaryPage(BuildFarmPage):
 
-    def _get_counts(self):
-        broken_count = defaultdict(lambda: 0)
-        panic_count = defaultdict(lambda: 0)
-        host_count = defaultdict(lambda: 0)
-
-        # set up a variable to store the broken builds table's code, so we can
-        # output when we want
-        broken_table = ""
-
-        builds = self.buildfarm.get_last_builds()
-
-        for build in builds:
-            host_count[build.tree]+=1
-            status = build.status()
-
-            if status.failed:
-                broken_count[build.tree]+=1
-                if "panic" in status.other_failures:
-                    panic_count[build.tree]+=1
-        return (host_count, broken_count, panic_count)
-
     def render_text(self, myself):
-        (host_count, broken_count, panic_count) = self._get_counts()
+        result = self.buildfarm.get_summarypage_builds()
         # for the text report, include the current time
         yield "Build status as of %s\n\n" % time.asctime()
 
         yield "Build counts:\n"
         yield "%-12s %-6s %-6s %-6s\n" % ("Tree", "Total", "Broken", "Panic")
 
-        for tree in sorted(self.buildfarm.trees.keys()):
-            yield "%-12s %-6s %-6s %-6s\n" % (tree, host_count[tree],
-                    broken_count[tree], panic_count[tree])
+        for build in result:
+            yield "%-12s %-6s %-6s %-6s\n" % (build.tree, build.total,
+                    build.broken, build.panic)
+
         yield "\n"
 
     def render_html(self, myself):
         """view build summary"""
 
-        (host_count, broken_count, panic_count) = self._get_counts()
+        result = self.buildfarm.get_summarypage_builds()
 
         yield "<div id='build-counts' class='build-section'>"
         yield "<h2>Build counts:</h2>"
@@ -764,38 +744,27 @@ class ViewSummaryPage(BuildFarmPage):
         yield "<thead><tr><th>Tree</th><th>Total</th><th>Broken</th><th>Panic</th><th>Test coverage</th></tr></thead>"
         yield "<tbody>"
 
-        for tree in sorted(self.buildfarm.trees.keys()):
+        for build in result: 
             yield "<tr>"
-            yield "<td>%s</td>" % self.tree_link(myself, tree)
-            yield "<td>%s</td>" % host_count[tree]
-            yield "<td>%s</td>" % broken_count[tree]
-            if panic_count[tree]:
+            yield "<td>%s</td>" % self.tree_link(myself, build.tree)
+            yield "<td>%s</td>" % build.total
+            yield "<td>%s</td>" % build.broken
+            if build.panic:
                     yield "<td class='panic'>"
             else:
                     yield "<td>"
-            yield "%d</td>" % panic_count[tree]
+            yield "%d</td>" % build.panic
 
-            try:
-                lcov_status = self.buildfarm.lcov_status(tree)
-            except NoSuchBuildError:
+            if build.coverage==None:
                 yield "<td></td>"
             else:
-                if lcov_status is not None:
-                    yield "<td><a href=\"/lcov/data/%s/%s\">%s %%</a></td>" % (
-                        self.buildfarm.LCOVHOST, tree, lcov_status)
-                else:
-                    yield "<td></td>"
-
-            try:
-                unused_fns = self.buildfarm.unused_fns(tree)
-            except NoSuchBuildError:
+                yield build.coverage
+ 
+            if build.unused==None:
                 yield "<td></td>"
             else:
-                if unused_fns is not None:
-                    yield "<td><a href=\"/lcov/data/%s/%s/%s\">Unused Functions</a></td>" % (
-                        self.buildfarm.LCOVHOST, tree, unused_fns)
-                else:
-                    yield "<td></td>"
+                yield build.unused
+
             yield "</tr>"
 
         yield "</tbody></table>"

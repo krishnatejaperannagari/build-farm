@@ -143,3 +143,72 @@ for build in buildfarm.get_new_builds():
         buildfarm.commit()
 
 smtp.quit()
+
+#updating the summarytable
+#few import statements
+from storm.locals import Bool, Int, RawStr, Reference, Unicode
+from storm.store import Store
+from storm.expr import Desc
+from buildfarm.build import StormSummary
+from collections import defaultdict
+
+    
+def upload_summary_table():
+
+        store = buildfarm._get_store()
+
+        broken_count = defaultdict(lambda: 0)
+        panic_count = defaultdict(lambda: 0)
+        host_count = defaultdict(lambda: 0)
+
+        builds = buildfarm.get_last_builds()
+        toremove = buildfarm.get_summarypage_builds()
+        for build in builds:
+            host_count[build.tree]+=1 
+            status = build.status()
+            if status.failed:
+                broken_count[build.tree]+=1
+                if "panic" in status.other_failures:
+                    panic_count[build.tree]+=1
+                    
+
+        for tree in sorted(buildfarm.trees.keys()):
+            a = tree
+            b = host_count[tree]
+            c = broken_count[tree]
+            d = panic_count[tree]
+
+            try:
+                lcov_status = buildfarm.lcov_status(tree)
+            except NoSuchBuildError:
+                e = None
+            else:
+                if lcov_status is not None:
+                    e = "<td><a href=\"/lcov/data/"+ buildfarm.LCOVHOST +"/"+ tree +"\">"+ lcov_status +" %</a></td>"    
+                else:
+                    e = None
+                    
+            try:
+                unused_fns = buildfarm.unused_fns(tree)
+            except NoSuchBuildError:
+                f = None
+            else:
+                if unused_fns is not None:
+                    f= "<td><a href=\"/lcov/data/" + buildfarm.LCOVHOST + "/"+ tree +"/" + unused_fns + "\">Unused Functions</a></td>"    
+                else:
+                   f = None
+
+            for value in toremove:
+                if value.tree==a:
+                    old_summary = value
+                    old_summary.remove()
+                    break
+
+            new_summary=StormSummary(a,b,c,d,e,f)
+            store.add(new_summary)
+            buildfarm.commit()
+    
+
+if not opts.dry_run:
+    upload_summary_table()
+

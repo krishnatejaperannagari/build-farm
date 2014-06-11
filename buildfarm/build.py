@@ -482,7 +482,31 @@ class StormBuild(Build):
         super(StormBuild, self).remove_logs()
         self.basename = None
 
+class StormSummary(object):
+    __storm_table__ = "summarypage"
+    
+    id=Int(primary=True)
+    tree = RawStr()
+    total = Int()
+    broken = Int()
+    panic = Int()
+    coverage = RawStr()
+    unused = RawStr()
 
+    def __init__(self, tree, total, broken, panic, coverage, unused):
+        self.tree = tree
+        self.total = total
+        self.broken = broken
+        self.panic = panic
+        self.coverage = coverage
+        self.unused = unused
+ 
+    def __repr__(self):
+        return "<%s: tree %s total %s broken %s panic %s coverage  %s unused %s>" % (self.__class__.__name__, self.tree, self.total, self.broken, self.panic, self.coverage, self.unused)
+
+    def remove(self):
+        Store.of(self).remove(self)
+ 
 class BuildResultStore(object):
     """The build farm build result database."""
 

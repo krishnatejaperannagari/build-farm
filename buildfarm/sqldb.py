@@ -241,7 +241,15 @@ CREATE TABLE IF NOT EXISTS test (
         result int
         );""", noresult=True)
     db.execute("""CREATE UNIQUE INDEX IF NOT EXISTS build_test_result ON test_result(build, test);""", noresult=True)
-
+    db.execute("""CREATE TABLE IF NOT EXISTS summarypage (
+        id integer primary key autoincrement,
+        tree blob,
+        total int,
+        broken int,
+        panic int,
+        coverage blob,
+        unused blob
+        );""", noresult=True)
 
 def memory_store():
     db = create_database("sqlite:")

@@ -139,6 +139,10 @@ class BuildFarm(object):
                 build.host in hostnames):
                 yield build
 
+    def get_summarypage_builds(self):
+        from buildfarm.build import StormSummary
+        return self._get_store().find(StormSummary)
+
     def get_last_builds(self):
         result = self._get_store().find(StormBuild)
         return distinct_builds(result.order_by(Desc(StormBuild.upload_time)))
