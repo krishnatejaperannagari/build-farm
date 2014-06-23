@@ -37,6 +37,30 @@ table.buildtable td{
 .newcontent pre{
     overflow-x:auto;
     overflow-y:hidden;
+    font-size: 15px;
+    font-weight: normal;
+    font-family:"Times New Roman", Times, serif;
+    line-height: 22px;
+}
+
+pre::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 10px;
+	background-color: #F5F5F5;
+}
+
+pre::-webkit-scrollbar
+{
+	width: 12px;
+	background-color: #F5F5F5;
+}
+
+pre::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #D62929;
 }
 
 /*sitemap*/
@@ -97,12 +121,11 @@ table.buildtable td{
         right: 20px;
         top: 230px;
 	z-index: 10;
-
 }
 
 #newbuildmenu select{
  	border: 1px solid #8f9994;
-	font-size:9px;
+        max-width:180px;
 }
 
 .newform input,
@@ -127,22 +150,37 @@ table.buildtable td{
  	background-image: linear-gradient(to bottom, #e40a0a, #9f0202);filter:progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr=#e40a0a, endColorstr=#9f0202);      
 }
 
-.prestyle::-webkit-scrollbar-track
-{
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-	border-radius: 10px;
-	background-color: #F5F5F5;
+.relatedLeft{
+position:absolute;
+top:540px;
+left:2px;
+width:140px;
+background-image: url(bgBoxSpecialNew.gif);
 }
 
-.prestyle::-webkit-scrollbar
-{
-	width: 12px;
-	background-color: #F5F5F5;
+.relatedLeftContent h4{
+	color: #c90000;
+	font-size: 18px;
+	font-weight: normal;
+	font-family: Georgia, serif;
+	line-height: 20px;
+        position:relative;
+        left: 8px;
+        top: 25px;
 }
 
-.prestyle::-webkit-scrollbar-thumb
-{
-	border-radius: 10px;
-	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #D62929;
+.relatedLeftContent a:link,
+.relatedLeftContent a:visited,
+.relatedLeftContent a:active,
+.relatedLeftContent a[href]:hover {
+	color: #045d9a;
+	font-size: 11px;
+	line-height: 15px;
+}
+
+.relatedLeftBottom{
+background-image: url(bgBoxSpecialBottomNew.gif);
+	position: absolute;
+	width: 140px;
+	height: 16px;
 }

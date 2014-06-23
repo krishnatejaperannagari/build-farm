@@ -263,7 +263,7 @@ class LogPrettyPrinter(object):
         if not buf == "":
             divhtml = "".join(log_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
             log = re.sub("Running action\s+test", divhtml, log)
-        return "<pre class='prestyle'>%s</pre>" % log
+        return "<pre>%s </pre>" % log
 
 
 def print_log_pretty(log):
@@ -291,7 +291,7 @@ def print_log_cc_checker(input):
         if line.startswith("-- "):
             # got a new entry
             if inEntry:
-                output += "".join(make_collapsible_html('cc_checker', title, content, id, status))
+                output += "".join(log_collapsible_html('cc_checker', title, content, id, status))
             else:
                 output += content
 
@@ -305,7 +305,7 @@ def print_log_cc_checker(input):
             (title, status, id) = ("%s %s" % (m.group(1), m.group(4)), m.group(2), m.group(3))
         elif line.startswith("CC_CHECKER STATUS"):
             if inEntry:
-                output += "".join(make_collapsible_html('cc_checker', title, content, id, status))
+                output += "".join(log_collapsible_html('cc_checker', title, content, id, status))
 
             inEntry = False
             content = ""
@@ -353,10 +353,10 @@ def log_collapsible_html(type, title, output, id, status=""):
     yield "<div class='%s output' id='output-%s'>" % (type, id)
     yield "<br>"
     if output:
-        yield "<pre class='prestyle'>%s</pre>" % (output,)
+        yield "<pre>%s \n </pre>" % (output,)
     yield "</div></div>"
     yield "<br>"
-    yield "<pre class='prestyle'>"
+    yield "<pre>"
 
 
 def make_collapsible_html(type, title, output, id, status=""):
@@ -383,7 +383,7 @@ def make_collapsible_html(type, title, output, id, status=""):
     yield "<div class='%s output' id='output-%s'>" % (type, id)
     yield "<br>"
     if output:
-        yield "<pre class='prestyle'>%s</pre>" % (output,)
+        yield "<pre>%s \n </pre>" % (output,)
     yield "</div></div>"
 
 
@@ -559,7 +559,7 @@ class ViewBuildPage(BuildFarmPage):
                 yield "<br>"
             else:
                 yield "<h2>Error log:</h2>"
-                yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
+                yield "".join(make_collapsible_html('action', "Error Output", "\n%s\n" % err, "stderr-0", "errorlog"))
                 yield "<br>"
 
             if log is None:
@@ -581,14 +581,14 @@ class ViewBuildPage(BuildFarmPage):
                 yield "<br>"
             else:
                 yield '<h2>Error log:</h2>\n'
-                yield '<div id="errorLog"><pre class="prestyle">%s</pre></div>' % err
+                yield '<div id="errorLog"><pre>%s \n </pre></div>' % err
                 yield "<br>"
             if log == "":
                 yield '<h2>No build log available</h2>'
                 yield "<br>"
             else:
                 yield '<h2>Build log:</h2>\n'
-                yield '<div id="buildLog"><pre class="prestyle">%s</pre></div>' % log
+                yield '<div id="buildLog"><pre>%s \n </pre></div>' % log
                 yield "<br>"
 
         yield '</div>'
@@ -871,7 +871,7 @@ class HistoryPage(BuildFarmPage):
             <span class=\"text\"><a href=\"%s?function=text_diff;tree=%s;date=%s;%s\">download diffs</a></span>
             <div class=\"history_log_message\">
                 <br>
-                <pre class='prestyle'>%s</pre>
+                <pre>%s</pre>
                 <br>
             </div>
         </div>
@@ -943,7 +943,7 @@ class DiffPage(HistoryPage):
         changes = branch.changes_summary(revision)
         yield "".join(self.history_row_html(myself, entry, t, changes))
         diff = highlight(diff, DiffLexer(), HtmlFormatter())
-        yield "<pre class='prestyle'>%s</pre>\n" % diff.encode("utf-8")
+        yield "<pre>%s</pre>\n" % diff.encode("utf-8")
 
 
 class RecentCheckinsPage(HistoryPage):
