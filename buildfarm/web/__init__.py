@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # This CGI script presents the results of the build_farm build
 
-# Copyright (C) Jelmer Vernooij <jelmer@samba.org>     2010
+# Copyright (C) Jelmer Vernooij <jelmer@samba.org>     2010-2014
 # Copyright (C) Matthieu Patou <mat@matws.net>         2010-2012
 #
 # Based on the original web/build.pl:
@@ -33,6 +33,7 @@
 
 from collections import defaultdict
 import os
+import sys
 
 from buildfarm import (
     hostdb,
@@ -125,7 +126,8 @@ def build_uri(myself, build):
 
 
 def build_link(myself, build):
-    return "<a href='%s'>%s</a>" % (build_uri(myself, build), html_build_status(build.status()))
+    return "<a href='%s'>%s</a>" % (
+        build_uri(myself, build), html_build_status(build.status()))
 
 
 def tree_uri(myself, tree):
@@ -134,7 +136,8 @@ def tree_uri(myself, tree):
 
 def tree_link(myself, tree):
     """return a link to a particular tree"""
-    return "<a href='%s' title='View recent builds for %s'>%s:%s</a>" % (tree_uri(myself, tree), tree.name, tree.name, tree.branch)
+    return "<a href='%s' title='View recent builds for %s'>%s:%s</a>" % (
+        tree_uri(myself, tree), tree.name, tree.name, tree.branch)
 
 
 def host_uri(myself, host):
@@ -437,7 +440,7 @@ class BuildFarmPage(object):
 
 class ViewBuildPage(BuildFarmPage):
 
-    def show_oldrevs(self, myself, build, host, compiler, limit):
+    def show_oldrevs(self, myself, build, host, compiler, limit=None):
         """show the available old revisions, if any"""
 
         tree = build.tree
@@ -452,11 +455,7 @@ class ViewBuildPage(BuildFarmPage):
         yield "<thead><tr><th>Revision</th><th>Status</th><th>Age</th></tr></thead>\n"
         yield "<tbody>\n"
 
-        nb = 0
-        for old_build in old_builds:
-            if limit >= 0 and nb >= limit:
-                break
-            nb = nb + 1
+        for old_build in old_builds[:limit]:
             yield "<tr><td>%s</td><td>%s</td><td>%s</td></tr>\n" % (
                 revision_link(myself, old_build.revision, tree),
                 build_link(myself, old_build),
@@ -1195,6 +1194,8 @@ class BuildFarmApp(object):
 if __name__ == '__main__':
     import optparse
     parser = optparse.OptionParser("[options]")
+    parser.add_option("--debug-storm", help="Enable storm debugging",
+                      default=False, action='store_true')
     parser.add_option("--port", help="Port to listen on [localhost:8000]",
         default="localhost:8000", type=str)
     opts, args = parser.parse_args()
@@ -1222,6 +1223,9 @@ if __name__ == '__main__':
     except ValueError:
         address = "localhost"
         port = opts.port
+    if opts.debug_storm:
+        from storm.tracer import debug
+        debug(True, stream=sys.stdout)
     httpd = make_server(address, int(port), standaloneApp)
     print "Serving on %s:%d..." % (address, int(port))
     httpd.serve_forever()
