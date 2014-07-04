@@ -125,7 +125,10 @@ def build_uri(myself, build):
 
 
 def build_link(myself, build):
-    return "<a href='%s'>%s</a>" % (build_uri(myself, build), html_build_status(build.status()))
+    if build.has_log():
+        return "<a href='%s'>%s</a>" % (build_uri(myself, build), html_build_status(build.status()))
+    else:
+        return "<div class='nocolor'>" + html_build_status(build.status()) + "</div>"
 
 
 def tree_uri(myself, tree):
