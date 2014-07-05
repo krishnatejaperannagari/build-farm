@@ -977,8 +977,38 @@ class FailedBuildsPage(BuildFarmPage):
         yield "</div>"
 
         if build_checksum != None:
+            try:
+                showbuild = self.buildfarm.builds.get_by_checksum(build_checksum)
+            except NoSuchBuildError:
                 pass
+#tochange
+            else:
+                try:
+                    f = build.read_log()
+                    try:
+                        log = f.read()
+                    finally:
+                        f.close()
+                except LogFileMissing:
+                    log = None
+                f = build.read_err()
+                try:
+                    err = f.read()
+                finally:
+                    f.close()
 
+                if err == "":
+                    yield "<h2>No error log available</h2>\n"
+                else:
+                    yield "<h2>Error log:</h2>"
+                    yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
+
+                if log is None:
+                    yield "<h2>No build log available</h2>"
+                else:
+                    yield "<h2>Build log:</h2>\n"
+                    yield print_log_pretty(log)
+         
 
 class BuildFarmApp(object):
 
@@ -1180,8 +1210,6 @@ class BuildFarmApp(object):
                 try:
                     build_tree = wsgiref.util.shift_path_info(environ)
                     build_checksum = wsgiref.util.shift_path_info(environ)
-                    print build_tree
-                    print build_checksum
                 except NoSuchBuildError:
                     start_response('404 Page Not Found', [
                         ('Content-Type', 'text/html; charset=utf8')])
