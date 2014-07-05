@@ -917,6 +917,58 @@ class RecentCheckinsPage(HistoryPage):
         yield "\n"
 
 
+class FailedBuildsPage(BuildFarmPage):
+    def render_html(self, myself, tree):
+
+        def build_platform(build):
+            host = self.buildfarm.hostdb[build.host]
+            return host.platform.encode("utf-8")
+
+        treebuilds = self.buildfarm.get_failed_builds(tree)
+        yield "<div id='recent-builds' class='build-section'>"
+        yield "<h2>Failed Builds of %s</h2>" % (tree)
+        yield "<table class='real'>"
+        yield "<thead>"
+        yield "<tr>"
+        yield "<th>Age"
+        yield "<th>Revision</th>"
+        yield "<th>Tree</th>"
+        yield "<th>Platform</th>"
+        yield "<th>Host</th>"
+        yield "<th>Compiler</th>"
+        yield "<th>Status</th>"
+        yield "</tr></thead>"
+        yield "<tbody>"
+
+        limit = 0
+        for build in treebuilds:
+            status = build.status()
+            show = False
+            for s in status.stages:
+                    if s.result != 0:
+                            show = True
+                            break
+            if show == True or "panic" in status.other_failures or "disk full" in status.other_failures or "timeout" in status.other_failures or "inconsistent test result" in status.other_failures:
+                limit = limit + 1
+                try:
+                        build_platform_name = build_platform(build)
+                        yield "<tr>"
+                        yield "<td>%s</td>" % util.dhm_time(build.age)
+                        yield "<td>%s</td>" % revision_link(myself, build.revision, build.tree)
+                        yield "<td>%s</td>" % build.tree
+                        yield "<td>%s</td>" % build_platform_name
+                        yield "<td>%s</td>" % host_link(myself, build.host)
+                        yield "<td>%s</td>" % build.compiler
+                        yield "<td>%s</td>" % build_link(myself, build)
+                        yield "</tr>"
+                except hostdb.NoSuchHost:
+                        pass
+                if limit == 15:
+                        break
+        yield "</tbody></table>"
+        yield "</div>"
+
+
 class BuildFarmApp(object):
 
     def __init__(self, buildfarm):
@@ -942,6 +994,7 @@ class BuildFarmApp(object):
         yield "<input type='submit' name='function' value='Recent Checkins'/>\n"
         yield "<input type='submit' name='function' value='Summary'/>\n"
         yield "<input type='submit' name='function' value='Recent Builds'/>\n"
+        yield "<input type='submit' name='function' value='Failed Builds'/>\n"
         yield "</div>\n"
         yield "</form>\n"
 
@@ -1023,6 +1076,9 @@ class BuildFarmApp(object):
                 author = get_param(form, 'author')
                 page = RecentCheckinsPage(self.buildfarm)
                 yield "".join(self.html_page(form, page.render(myself, tree, author)))
+            elif fn_name == "Failed_Builds":
+                page = FailedBuildsPage(self.buildfarm)
+                yield "".join(self.html_page(form, page.render_html(myself, tree)))
             elif fn_name == "diff":
                 revision = get_param(form, 'revision')
                 page = DiffPage(self.buildfarm)
