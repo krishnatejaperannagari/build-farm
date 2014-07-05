@@ -130,6 +130,11 @@ def build_link(myself, build):
     else:
         return "<div class='nocolor'>" + html_build_status(build.status()) + "</div>"
 
+def build_failed_link(myself, tree, build):
+    if build.has_log():
+        return "<a href='%s/failedbuild/%s/%s'>%s</a>" % (myself, tree, build.log_checksum(), html_build_status(build.status()))
+    else:
+        return "<div class='nocolor'>" + html_build_status(build.status()) + "</div>"
 
 def tree_uri(myself, tree):
     return "%s/tree/%s" % (myself, tree.name)
@@ -921,7 +926,7 @@ class RecentCheckinsPage(HistoryPage):
 
 
 class FailedBuildsPage(BuildFarmPage):
-    def render_html(self, myself, tree):
+    def render_html(self, myself, tree, build_checksum = None):
 
         def build_platform(build):
             host = self.buildfarm.hostdb[build.host]
@@ -948,28 +953,31 @@ class FailedBuildsPage(BuildFarmPage):
             status = build.status()
             show = False
             for s in status.stages:
-                    if s.result != 0:
-                            show = True
-                            break
+                if s.result != 0:
+                    show = True
+                    break
             if show == True or "panic" in status.other_failures or "disk full" in status.other_failures or "timeout" in status.other_failures or "inconsistent test result" in status.other_failures:
                 limit = limit + 1
                 try:
-                        build_platform_name = build_platform(build)
-                        yield "<tr>"
-                        yield "<td>%s</td>" % util.dhm_time(build.age)
-                        yield "<td>%s</td>" % revision_link(myself, build.revision, build.tree)
-                        yield "<td>%s</td>" % build.tree
-                        yield "<td>%s</td>" % build_platform_name
-                        yield "<td>%s</td>" % host_link(myself, build.host)
-                        yield "<td>%s</td>" % build.compiler
-                        yield "<td>%s</td>" % build_link(myself, build)
-                        yield "</tr>"
+                    build_platform_name = build_platform(build)
+                    yield "<tr>"
+                    yield "<td>%s</td>" % util.dhm_time(build.age)
+                    yield "<td>%s</td>" % revision_link(myself, build.revision, build.tree)
+                    yield "<td>%s</td>" % build.tree
+                    yield "<td>%s</td>" % build_platform_name
+                    yield "<td>%s</td>" % host_link(myself, build.host)
+                    yield "<td>%s</td>" % build.compiler
+                    yield "<td>%s</td>" % build_failed_link(myself, tree, build)
+                    yield "</tr>"
                 except hostdb.NoSuchHost:
-                        pass
+                    pass
                 if limit == 15:
-                        break
+                    break
         yield "</tbody></table>"
         yield "</div>"
+
+        if build_checksum != None:
+                pass
 
 
 class BuildFarmApp(object):
@@ -1136,7 +1144,7 @@ class BuildFarmApp(object):
                     try:
                         yield build.read_subunit().read()
                     except NoTestOutput:
-                        yield "There was no test output"
+                        yield "There was no test output" 
                 elif subfn == "+stdout":
                     start_response('200 OK', [
                         ('Content-type', 'text/plain; charset=utf-8'),
@@ -1168,6 +1176,21 @@ class BuildFarmApp(object):
                     start_response('200 OK', [
                         ('Content-type', 'text/html; charset=utf-8')])
                     yield "".join(self.html_page(form, page.render(myself, build, False, limit)))
+            elif fn == "failedbuild":
+                try:
+                    build_tree = wsgiref.util.shift_path_info(environ)
+                    build_checksum = wsgiref.util.shift_path_info(environ)
+                    print build_tree
+                    print build_checksum
+                except NoSuchBuildError:
+                    start_response('404 Page Not Found', [
+                        ('Content-Type', 'text/html; charset=utf8')])
+                    yield "No build with checksum %s found" % build_checksum
+                    return
+                start_response('200 OK', [
+                    ('Content-type', 'text/html; charset=utf-8')])
+                page = FailedBuildsPage(self.buildfarm)
+                yield "".join(self.html_page(form, page.render_html(myself, build_tree, build_checksum)))
             elif fn in ("", None):
                 start_response('200 OK', [
                     ('Content-type', 'text/html; charset=utf-8')])
