@@ -998,16 +998,49 @@ class FailedBuildsPage(BuildFarmPage):
                     f.close()
 
                 if err == "":
-                    yield "<h2>No error log available</h2>\n"
+                    pass
                 else:
                     yield "<h2>Error log:</h2>"
-                    yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
+                    yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0"))
 
                 if log is None:
-                    yield "<h2>No build log available</h2>"
+                    pass
                 else:
-                    yield "<h2>Build log:</h2>\n"
-                    yield print_log_pretty(log)
+                    match = re.findall('(.*warning.*)|(.*error.*)|(^\|.*)' ,log ,re.M|re.I)
+
+                    matchresult = "" 
+                    for s in match:
+                        if s[0] != "":
+    	                    matchresult += s[0]
+                            matchresult += "\n"
+                    if matchresult != "":
+                        yield "<h2>Warnings:</h2>\n"
+                        yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % matchresult, "stderr-0"))
+
+                    matchresult = ""
+                    for s in match:
+                        if s[1] != "":
+    	                    matchresult += s[1]
+                            matchresult += "\n"
+                    if matchresult != "":
+                        yield "<h2>Errors:</h2>\n"
+                        yield "".join(make_collapsible_html('action', "Errors", "\n%s" % matchresult, "stderr-0"))
+
+                    matchresult = ""
+                    for s in match:
+	                if s[2] == '':
+		            displayheader = True
+	                if s[2] != '':
+		            if displayheader == True:
+			        matchresult += "\n"
+			        matchresult += "Failed Program was:\n"
+			        displayheader = False
+		        matchresult += s[2]
+		        matchresult += "\n"
+                    if matchresult != "":
+                        yield "<h2>Failures:</h2>\n"
+                        yield "".join(make_collapsible_html('action', "Failures", "\n%s" % matchresult, "stderr-0"))
+
          
 
 class BuildFarmApp(object):
