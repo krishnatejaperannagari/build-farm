@@ -186,6 +186,70 @@ def format_subunit_reason(reason):
     return "<div class=\"reason\">%s</div>" % reason
 
 
+def display_failed_log(build):
+    try:
+        f = build.read_log()
+        try:
+            log = f.read()
+        finally:
+            f.close()
+    except LogFileMissing:
+        log = None
+    f = build.read_err()
+    try:
+        err = f.read()
+    finally:
+        f.close()
+
+    if err == "":
+        pass
+    else:
+        yield "<h2>Error log:</h2>"
+        yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0"))
+
+    if log is None:
+        pass
+    else:
+        match = re.findall('(.*warning.*)|(.*error.*)|(^\|.*)' ,log ,re.M|re.I)
+
+        matchresult = "" 
+        for s in match:
+            if s[0] != "":
+                matchresult += s[0]
+                matchresult += "\n"
+        if matchresult != "":
+            yield "<h2>Warnings:</h2>\n"
+            yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % matchresult, "stderr-0"))
+
+        matchresult = ""
+        for s in match:
+            if s[1] != "":
+                matchresult += s[1]
+                matchresult += "\n"
+        if matchresult != "":
+            yield "<h2>Errors:</h2>\n"
+            yield "".join(make_collapsible_html('action', "Errors", "\n%s" % matchresult, "stderr-0"))
+
+        matchresult = ""
+        for s in match:
+            if s[2] == '':
+                displayheader = True
+            if s[2] != '':
+                if displayheader == True:
+                    matchresult += "\n"
+                    matchresult += "Failed Program was:\n"
+                    displayheader = False
+                matchresult += s[2]
+                matchresult += "\n"
+        if matchresult != "":
+            yield "<h2>Failures:</h2>\n"
+            yield "".join(make_collapsible_html('action', "Failures", "\n%s" % matchresult, "stderr-0"))
+
+
+def display_build_log():
+    pass
+
+
 class LogPrettyPrinter(object):
 
     def __init__(self):
@@ -981,66 +1045,9 @@ class FailedBuildsPage(BuildFarmPage):
                 showbuild = self.buildfarm.builds.get_by_checksum(build_checksum)
             except NoSuchBuildError:
                 pass
-#tochange
             else:
-                try:
-                    f = build.read_log()
-                    try:
-                        log = f.read()
-                    finally:
-                        f.close()
-                except LogFileMissing:
-                    log = None
-                f = build.read_err()
-                try:
-                    err = f.read()
-                finally:
-                    f.close()
-
-                if err == "":
-                    pass
-                else:
-                    yield "<h2>Error log:</h2>"
-                    yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0"))
-
-                if log is None:
-                    pass
-                else:
-                    match = re.findall('(.*warning.*)|(.*error.*)|(^\|.*)' ,log ,re.M|re.I)
-
-                    matchresult = "" 
-                    for s in match:
-                        if s[0] != "":
-    	                    matchresult += s[0]
-                            matchresult += "\n"
-                    if matchresult != "":
-                        yield "<h2>Warnings:</h2>\n"
-                        yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % matchresult, "stderr-0"))
-
-                    matchresult = ""
-                    for s in match:
-                        if s[1] != "":
-    	                    matchresult += s[1]
-                            matchresult += "\n"
-                    if matchresult != "":
-                        yield "<h2>Errors:</h2>\n"
-                        yield "".join(make_collapsible_html('action', "Errors", "\n%s" % matchresult, "stderr-0"))
-
-                    matchresult = ""
-                    for s in match:
-	                if s[2] == '':
-		            displayheader = True
-	                if s[2] != '':
-		            if displayheader == True:
-			        matchresult += "\n"
-			        matchresult += "Failed Program was:\n"
-			        displayheader = False
-		        matchresult += s[2]
-		        matchresult += "\n"
-                    if matchresult != "":
-                        yield "<h2>Failures:</h2>\n"
-                        yield "".join(make_collapsible_html('action', "Failures", "\n%s" % matchresult, "stderr-0"))
-
+                yield "".join(display_failed_log(build))
+ 
          
 
 class BuildFarmApp(object):
