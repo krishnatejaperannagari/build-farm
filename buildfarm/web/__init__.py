@@ -1036,11 +1036,11 @@ class BuildFarmApp(object):
         host = get_param(form, "host")
         compiler = get_param(form, "compiler")
         yield "".join(self.main_menu(tree, host, compiler))
-        yield util.FileLoad(os.path.join(webdir, "changes/bannernav.html"))
+        yield util.FileLoad(os.path.join(webdir, "bannernav.html"))
         yield "".join(lines)
-        yield util.FileLoad(os.path.join(webdir, "changes/sitemap.html"))
-        yield util.FileLoad(os.path.join(webdir, "changes/right.html"))
-        yield util.FileLoad(os.path.join(webdir, "changes/closingtags.html"))             
+        yield util.FileLoad(os.path.join(webdir, "sitemap.html"))
+        yield util.FileLoad(os.path.join(webdir, "right.html"))
+        yield util.FileLoad(os.path.join(webdir, "closingtags.html"))             
 
     def __call__(self, environ, start_response):
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
