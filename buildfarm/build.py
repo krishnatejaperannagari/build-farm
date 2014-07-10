@@ -483,41 +483,6 @@ class StormBuild(Build):
         self.basename = None
 
 
-#class StormFailedBuild(Build):
-#    __storm_table__ = "failedbuild"
-#
-#    id = Int(primary=True)
-#    tree = RawStr()
-#    revision = RawStr()
-#    host = RawStr()
-#    compiler = RawStr()
-#    checksum = RawStr()
-#    upload_time = Int(name="age")
-#    status_str = RawStr(name="status")
-#    basename = RawStr()
-#    host_id = Int()
-#    tree_id = Int()
-#    compiler_id = Int()
-#
-#    def status(self):
-#        return BuildStatus.__deserialize__(self.status_str)
-#
-#    def revision_details(self):
-#        return self.revision
-#
-#    def log_checksum(self):
-#        return self.checksum
-
-
-    def remove(self):
-        super(StormFailedBuild, self).remove()
-        Store.of(self).remove(self)
-
-    def remove_logs(self):
-        super(StormFailedBuild, self).remove_logs()
-        self.basename = None
-
-
 class BuildResultStore(object):
     """The build farm build result database."""
 

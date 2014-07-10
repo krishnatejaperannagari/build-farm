@@ -215,40 +215,43 @@ def display_failed_log(myself, build):
     if log is None:
         pass
     else:
-        match = re.findall('(.*warning.*)|(.*error.*)|(^\|.*)' ,log ,re.M|re.I)
+        errormatch = ''
+        warningmatch = ''
+        failedmatch = ''
+        othermatch = ''
+        for i,line in enumerate(log.splitlines()):
+            match = re.search("(.* error.*)|(.*warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
+            if match:
+                if match.group(1):
+                    errormatch += 'Line number ' + str(i+1) + ': '
+                    errormatch += str(match.group(1))
+                    errormatch += '\n'
+                if match.group(2):
+                    warningmatch += 'Line number ' + str(i+1) + ': '
+                    warningmatch += str(match.group(2))
+                    warningmatch += '\n'
+                if match.group(3):
+                    failedmatch += 'Line number ' + str(i+1) + ': '
+                    failedmatch += str(match.group(3))
+                    failedmatch += '\n'
+                if match.group(4):
+                    othermatch += 'Line number ' + str(i+1) + ': '
+                    othermatch += str(match.group(4))
+                    othermatch += '\n'
 
-        matchresult = "" 
-        for s in match:
-            if s[0] != "":
-                matchresult += s[0]
-                matchresult += "\n"
-        if matchresult != "":
-            yield "<h2>Warnings:</h2>\n"
-            yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % matchresult, "stderr-0"))
+        if  errormatch != "":
+            yield "<h2>Errors</h2>\n"
+            yield "".join(make_collapsible_html('action', "Errors", "\n%s" % errormatch , "stderr-0"))
+        if  warningmatch != "":
+            yield "<h2>Warnings</h2>\n"
+            yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % warningmatch, "stderr-0"))
+        if  failedmatch != "":
+            yield "<h2>Failures</h2>\n"
+            yield "".join(make_collapsible_html('action', "Failures", "\n%s" % failedmatch , "stderr-0"))
+        if  othermatch != "":
+            yield "<h2>Other Reasons</h2>\n"
+            yield "".join(make_collapsible_html('action', "Other Reasons", "\n%s" % othermatch, "stderr-0"))
 
-        matchresult = ""
-        for s in match:
-            if s[1] != "":
-                matchresult += s[1]
-                matchresult += "\n"
-        if matchresult != "":
-            yield "<h2>Errors:</h2>\n"
-            yield "".join(make_collapsible_html('action', "Errors", "\n%s" % matchresult, "stderr-0"))
-
-        matchresult = ""
-        for s in match:
-            if s[2] == '':
-                displayheader = True
-            if s[2] != '':
-                if displayheader == True:
-                    matchresult += "\n"
-                    matchresult += "Failed Program was:\n"
-                    displayheader = False
-                matchresult += s[2]
-                matchresult += "\n"
-        if matchresult != "":
-            yield "<h2>Failures:</h2>\n"
-            yield "".join(make_collapsible_html('action', "Failures", "\n%s" % matchresult, "stderr-0"))
 
 
 def display_build_log():
