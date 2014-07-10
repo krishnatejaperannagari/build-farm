@@ -186,7 +186,7 @@ def format_subunit_reason(reason):
     return "<div class=\"reason\">%s</div>" % reason
 
 
-def display_failed_log(build):
+def display_failed_log(myself, build):
     try:
         f = build.read_log()
         try:
@@ -200,6 +200,11 @@ def display_failed_log(build):
         err = f.read()
     finally:
         f.close()
+
+    if err != "":
+        yield "<a href='%s/+stderr'><input type='button' value='Standard error (as plain text)' /></a>" % build_uri(myself, build)
+    if log is not None:
+        yield "<p><a href='%s/+stdout'><input type='button' value='Standard output (as plain text)' /></a>" % build_uri(myself, build)
 
     if err == "":
         pass
@@ -1039,14 +1044,13 @@ class FailedBuildsPage(BuildFarmPage):
                     break
         yield "</tbody></table>"
         yield "</div>"
-
         if build_checksum != None:
             try:
                 showbuild = self.buildfarm.builds.get_by_checksum(build_checksum)
             except NoSuchBuildError:
                 pass
             else:
-                yield "".join(display_failed_log(build))
+                yield "".join(display_failed_log(myself,build))
  
          
 
