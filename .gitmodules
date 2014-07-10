@@ -1,6 +1,3 @@
-[submodule "web/changes/submodule"]
-	path = web/changes/submodule
-	url = https://github.com/krishnatejaperannagari/samba-web
 [submodule "web/samba-web"]
 	path = web/samba-web
 	url = https://github.com/krishnatejaperannagari/samba-web
