@@ -201,12 +201,12 @@ def display_failed_log(myself, build):
     finally:
         f.close()
 
-    if err != "":
+    if err:
         yield "<a href='%s/+stderr'><input type='button' value='Standard error (as plain text)' /></a>" % build_uri(myself, build)
-    if log is not None:
+    if log:
         yield "<p><a href='%s/+stdout'><input type='button' value='Standard output (as plain text)' /></a>" % build_uri(myself, build)
 
-    if err == "":
+    if err is None:
         pass
     else:
         yield "<h2>Error log:</h2>"
@@ -215,47 +215,42 @@ def display_failed_log(myself, build):
     if log is None:
         pass
     else:
-        errormatch = ''
-        warningmatch = ''
-        failedmatch = ''
-        othermatch = ''
+        errors_found = ''
+        warnings_found = ''
+        failures_found = ''
+        other_reasons = ''
         for i,line in enumerate(log.splitlines()):
-            match = re.search("(.* error.*)|(.*warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
+            match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
             if match:
                 if match.group(1):
-                    errormatch += 'Line number ' + str(i+1) + ': '
-                    errormatch += str(match.group(1))
-                    errormatch += '\n'
+                    errors_found += 'Line number ' + str(i+1) + ': '
+                    errors_found += str(match.group(1))
+                    errors_found += '\n'
                 if match.group(2):
-                    warningmatch += 'Line number ' + str(i+1) + ': '
-                    warningmatch += str(match.group(2))
-                    warningmatch += '\n'
+                    warnings_found += 'Line number ' + str(i+1) + ': '
+                    warnings_found += str(match.group(2))
+                    warnings_found += '\n'
                 if match.group(3):
-                    failedmatch += 'Line number ' + str(i+1) + ': '
-                    failedmatch += str(match.group(3))
-                    failedmatch += '\n'
+                    failures_found += 'Line number ' + str(i+1) + ': '
+                    failures_found += str(match.group(3))
+                    failures_found += '\n'
                 if match.group(4):
-                    othermatch += 'Line number ' + str(i+1) + ': '
-                    othermatch += str(match.group(4))
-                    othermatch += '\n'
+                    other_reasons += 'Line number ' + str(i+1) + ': '
+                    other_reasons += str(match.group(4))
+                    other_reasons += '\n'
 
-        if  errormatch != "":
+        if  errors_found != '':
             yield "<h2>Errors</h2>\n"
-            yield "".join(make_collapsible_html('action', "Errors", "\n%s" % errormatch , "stderr-0"))
-        if  warningmatch != "":
+            yield "".join(make_collapsible_html('action', "Errors", "\n%s" % errors_found , "stderr-0"))
+        if  warnings_found != '':
             yield "<h2>Warnings</h2>\n"
-            yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % warningmatch, "stderr-0"))
-        if  failedmatch != "":
+            yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % warnings_found, "stderr-0"))
+        if  failures_found != '':
             yield "<h2>Failures</h2>\n"
-            yield "".join(make_collapsible_html('action', "Failures", "\n%s" % failedmatch , "stderr-0"))
-        if  othermatch != "":
+            yield "".join(make_collapsible_html('action', "Failures", "\n%s" % failures_found , "stderr-0"))
+        if  other_reasons != '':
             yield "<h2>Other Reasons</h2>\n"
-            yield "".join(make_collapsible_html('action', "Other Reasons", "\n%s" % othermatch, "stderr-0"))
-
-
-
-def display_build_log():
-    pass
+            yield "".join(make_collapsible_html('action', "Other Reasons", "\n%s" % other_reasons, "stderr-0"))
 
 
 class LogPrettyPrinter(object):
@@ -1004,7 +999,7 @@ class FailedBuildsPage(BuildFarmPage):
             host = self.buildfarm.hostdb[build.host]
             return host.platform.encode("utf-8")
 
-        treebuilds = self.buildfarm.get_failed_builds(tree)
+        builds = self.buildfarm.get_failed_builds(tree)
         yield "<div id='recent-builds' class='build-section'>"
         yield "<h2>Failed Builds of %s</h2>" % (tree)
         yield "<table class='real'>"
@@ -1021,7 +1016,7 @@ class FailedBuildsPage(BuildFarmPage):
         yield "<tbody>"
 
         limit = 0
-        for build in treebuilds:
+        for build in builds:
             status = build.status()
             show = False
             for s in status.stages:
@@ -1049,7 +1044,7 @@ class FailedBuildsPage(BuildFarmPage):
         yield "</div>"
         if build_checksum != None:
             try:
-                showbuild = self.buildfarm.builds.get_by_checksum(build_checksum)
+                build = self.buildfarm.builds.get_by_checksum(build_checksum)
             except NoSuchBuildError:
                 pass
             else:

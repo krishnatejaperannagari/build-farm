@@ -158,10 +158,6 @@ class BuildFarm(object):
     def get_failed_builds(self, tree):
         store = self._get_store()
         return store.find(StormBuild, StormBuild.tree == tree).order_by(Desc(StormBuild.upload_time))        
-#        report_path = os.path.join(self.path, "data/report")
-#        if not os.path.isdir(report_path):
-#            os.mkdir(report_path)
-#        return report_path
 
     def _get_store(self):
         if self.store is not None:
