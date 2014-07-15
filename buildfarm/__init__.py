@@ -155,7 +155,7 @@ class BuildFarm(object):
         result = self._get_store().find(StormBuild, StormBuild.host == host)
         return distinct_builds(result.order_by(Desc(StormBuild.upload_time)))
 
-    def get_failed_builds(self, tree):
+    def latest_tree_builds(self, tree):
         store = self._get_store()
         return store.find(StormBuild, StormBuild.tree == tree).order_by(Desc(StormBuild.upload_time))        
 

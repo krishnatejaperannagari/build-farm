@@ -206,20 +206,16 @@ def display_failed_log(myself, build):
     if log:
         yield "<p><a href='%s/+stdout'><input type='button' value='Standard output (as plain text)' /></a>" % build_uri(myself, build)
 
-    if err is None:
-        pass
-    else:
+    if err is not None:
         yield "<h2>Error log:</h2>"
         yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0"))
 
-    if log is None:
-        pass
-    else:
+    if log is not None:
         errors_found = ''
         warnings_found = ''
         failures_found = ''
         other_reasons = ''
-        for i,line in enumerate(log.splitlines()):
+        for i, line in enumerate(log.splitlines()):
             match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
             if match:
                 if match.group(1):
@@ -993,13 +989,14 @@ class RecentCheckinsPage(HistoryPage):
 
 
 class FailedBuildsPage(BuildFarmPage):
-    def render_html(self, myself, tree, build_checksum = None):
+
+    def render_html(self, myself, tree, build_checksum=None):
 
         def build_platform(build):
             host = self.buildfarm.hostdb[build.host]
             return host.platform.encode("utf-8")
 
-        builds = self.buildfarm.get_failed_builds(tree)
+        builds = self.buildfarm.latest_tree_builds(tree)
         yield "<div id='recent-builds' class='build-section'>"
         yield "<h2>Failed Builds of %s</h2>" % (tree)
         yield "<table class='real'>"
@@ -1015,7 +1012,7 @@ class FailedBuildsPage(BuildFarmPage):
         yield "</tr></thead>"
         yield "<tbody>"
 
-        limit = 0
+        index = 0
         for build in builds:
             status = build.status()
             show = False
@@ -1024,7 +1021,7 @@ class FailedBuildsPage(BuildFarmPage):
                     show = True
                     break
             if show == True or "panic" in status.other_failures or "disk full" in status.other_failures or "timeout" in status.other_failures or "inconsistent test result" in status.other_failures:
-                limit = limit + 1
+                index = index + 1
                 try:
                     build_platform_name = build_platform(build)
                     yield "<tr>"
@@ -1038,7 +1035,7 @@ class FailedBuildsPage(BuildFarmPage):
                     yield "</tr>"
                 except hostdb.NoSuchHost:
                     pass
-                if limit == 15:
+                if index == 15:
                     break
         yield "</tbody></table>"
         yield "</div>"
