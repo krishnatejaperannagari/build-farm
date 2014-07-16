@@ -17,6 +17,9 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+import urllib2
+import re
+
 def load_list(fname):
     """load a list from a file, using : to separate"""
     ret = []
@@ -40,6 +43,15 @@ def FileLoad(filename):
     finally:
         f.close()
 
+def UrlLoad(url):
+    """reads url parses the relatuve links"""
+    links = urllib2.urlopen(url)
+    modifiedlinks = ""
+    for line in links:
+        line = re.sub('href="/samba', 'href="http://www.samba.org/samba' ,line)
+        modifiedlinks += line + "\n"
+    return modifiedlinks
+	
 
 def dhm_time(sec):
     """display a time as days, hours, minutes"""
