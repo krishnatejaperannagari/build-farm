@@ -916,7 +916,7 @@ class DiffPage(HistoryPage):
         changes = branch.changes_summary(revision)
         yield "".join(self.history_row_html(myself, entry, t, changes))
         diff = highlight(diff, DiffLexer(), HtmlFormatter())
-        yield "<pre>%s</pre>\n" % diff.encode("utf-8")
+        yield "<pre>%s</pre>" % diff.encode("utf-8")
 
 
 class RecentCheckinsPage(HistoryPage):
