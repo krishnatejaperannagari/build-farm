@@ -195,20 +195,20 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
-        return "".join(log_collapsible_html('action', actionName, output, self.indice, status))
+        return "".join(make_collapsible_html('action', actionName, output, self.indice, status))
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
-        return "".join(log_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
+        return "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
-        return "".join(log_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
+        return "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
 
     def _format_pretestsuite(self, m):
         self.indice += 1
-        return m.group(1)+"".join(log_collapsible_html('pretest', 'Pretest infos', m.group(2), self.indice, 'ok'))+"\n"+m.group(3)
+        return m.group(1)+"".join(make_collapsible_html('pretest', 'Pretest infos', m.group(2), self.indice, 'ok'))+"\n"+m.group(3)
 
     def _format_testsuite(self, m):
         testName = m.group(1)
@@ -223,11 +223,11 @@ class LogPrettyPrinter(object):
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
-        return "".join(log_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
+        return "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
 
     def _format_test(self, m):
         self.indice += 1
-        return "".join(log_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
+        return "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
@@ -264,7 +264,7 @@ class LogPrettyPrinter(object):
             buf = "%s\n<A href='#%s'>%s</A>" % (buf, tst[1], tst[0])
 
         if not buf == "":
-            divhtml = "".join(log_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
+            divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
             log = re.sub("Running action\s+test", divhtml, log)
         return "<pre>%s </pre>" % log
 
@@ -294,7 +294,7 @@ def print_log_cc_checker(input):
         if line.startswith("-- "):
             # got a new entry
             if inEntry:
-                output += "".join(log_collapsible_html('cc_checker', title, content, id, status))
+                output += "".join(make_collapsible_html('cc_checker', title, content, id, status))
             else:
                 output += content
 
@@ -308,7 +308,7 @@ def print_log_cc_checker(input):
             (title, status, id) = ("%s %s" % (m.group(1), m.group(4)), m.group(2), m.group(3))
         elif line.startswith("CC_CHECKER STATUS"):
             if inEntry:
-                output += "".join(log_collapsible_html('cc_checker', title, content, id, status))
+                output += "".join(make_collapsible_html('cc_checker', title, content, id, status))
 
             inEntry = False
             content = ""
@@ -330,7 +330,7 @@ def print_log_cc_checker(input):
     return output
 
 
-def log_collapsible_html(type, title, output, id, status=""):
+def make_collapsible_html(type, title, output, id, status=""):
     """generate html for a collapsible section of log as it is already in pre
 
     :param type: the logical type of it. e.g. "test" or "action"
@@ -360,34 +360,6 @@ def log_collapsible_html(type, title, output, id, status=""):
     yield "</div></div>"
     yield "<br>"
     yield "<pre>"
-
-
-def make_collapsible_html(type, title, output, id, status=""):
-    """generate html for a collapsible section
-
-    :param type: the logical type of it. e.g. "test" or "action"
-    :param title: the title to be displayed
-    """
-    if status.lower() in ("", "failed"):
-        icon = '/icon_hide_16.png'
-    else:
-        icon = '/icon_unhide_16.png'
-
-    # trim leading and trailing whitespace
-    output = output.strip()
-
-    # note that we may be inside a <pre>, so we don't put any extra whitespace
-    # in this html
-    yield "<div class='%s unit %s' id='%s-%s'>" % (type, status, type, id)
-    yield "<a name='lnk-%s-%s' href=\"javascript:handle('%s');\">" % (type, id, id)
-    yield "<img id='img-%s' name='img-%s' alt='%s' src='%s' />" % (id, id, status, icon)
-    yield "<div class='%s title'>%s</div></a>" % (type, title)
-    yield "<div class='%s status %s'>%s</div>" % (type, status, status)
-    yield "<div class='%s output' id='output-%s'>" % (type, id)
-    yield "<br>"
-    if output:
-        yield "<pre>%s \n </pre>" % (output,)
-    yield "</div></div>"
 
 
 def web_paths(t, paths):
@@ -558,7 +530,9 @@ class ViewBuildPage(BuildFarmPage):
                 yield "<br>"
             else:
                 yield "<h2>Error log:</h2>"
+                yield "<pre>"
                 yield "".join(make_collapsible_html('action', "Error Output", "\n%s\n" % err, "stderr-0", "errorlog"))
+                yield "</pre>"
                 yield "<br>"
 
             if log is None:

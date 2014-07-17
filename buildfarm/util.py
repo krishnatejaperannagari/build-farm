@@ -50,7 +50,7 @@ def LoadAndParse(filename):
     finally:
         f.close()
     modifiedlinks = ""
-    for line in links:
+    for line in links.splitlines():
         line = re.sub('href="/samba', 'href="http://www.samba.org/samba' ,line)
         modifiedlinks += line + "\n"
     return modifiedlinks
