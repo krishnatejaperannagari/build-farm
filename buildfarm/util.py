@@ -17,7 +17,6 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-import urllib2
 import re
 
 def load_list(fname):
@@ -43,9 +42,13 @@ def FileLoad(filename):
     finally:
         f.close()
 
-def UrlLoad(url):
-    """reads url parses the relatuve links"""
-    links = urllib2.urlopen(url)
+def LoadAndParse(filename):
+    """loads file and changes the links to suit buildfarm""" 
+    f = open(filename, 'r')
+    try:
+        links = f.read()
+    finally:
+        f.close()
     modifiedlinks = ""
     for line in links:
         line = re.sub('href="/samba', 'href="http://www.samba.org/samba' ,line)
