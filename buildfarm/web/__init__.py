@@ -1147,6 +1147,16 @@ class BuildFarmApp(object):
                     ('Content-type', 'text/html; charset=utf-8')])
                 page = ViewHostPage(self.buildfarm)
                 yield "".join(self.html_page(form, page.render_html(myself, wsgiref.util.shift_path_info(environ))))
+            elif fn == "about":
+                start_response('200 OK', [
+                    ('Content-type', 'text/html; charset=utf-8')])
+                lines = util.FileLoad(os.path.join(webdir, "about.html"))
+                yield "".join(self.html_page(form, lines))
+            elif fn == "instructions":
+                start_response('200 OK', [
+                    ('Content-type', 'text/html; charset=utf-8')])
+                lines = util.FileLoad(os.path.join(webdir, "instructions.html"))
+                yield "".join(self.html_page(form, lines))
             elif fn == "build":
                 build_checksum = wsgiref.util.shift_path_info(environ)
                 try:
