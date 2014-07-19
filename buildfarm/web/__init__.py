@@ -266,7 +266,7 @@ class LogPrettyPrinter(object):
         if not buf == "":
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
             log = re.sub("Running action\s+test", divhtml, log)
-        return "<pre>%s </pre>" % log
+        return "<pre>%s</pre>" % log
 
 
 def print_log_pretty(log):
@@ -1029,29 +1029,29 @@ class BuildFarmApp(object):
         compiler = get_param(form, "compiler")
         yield "".join(self.main_menu(tree, host, compiler))
         yield util.FileLoad(os.path.join(webdir, "bannernav1.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_think_samba_closed.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_get_samba_closed.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_learn_samba_closed.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_talk_samba_closed.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_hack_samba_closed.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_contact_samba_closed.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_think_samba_closed.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_get_samba_closed.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_learn_samba_closed.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_talk_samba_closed.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_hack_samba_closed.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_contact_samba_closed.html"))
         yield util.FileLoad(os.path.join(webdir, "bannernav2.html"))
         yield "".join(lines)
         yield util.FileLoad(os.path.join(webdir, "sitemap1.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_think_samba_raw.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_think_samba_raw.html"))
         yield util.FileLoad(os.path.join(webdir, "sitemap2.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_get_samba_raw.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_get_samba_raw.html"))
         yield util.FileLoad(os.path.join(webdir, "sitemap3.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_learn_samba_raw.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_learn_samba_raw.html"))
         yield util.FileLoad(os.path.join(webdir, "sitemap4.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_talk_samba_raw.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_talk_samba_raw.html"))
         yield util.FileLoad(os.path.join(webdir, "sitemap5.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_hack_samba_raw.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_hack_samba_raw.html"))
         yield util.FileLoad(os.path.join(webdir, "sitemap6.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "menu_contact_samba_raw.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_contact_samba_raw.html"))
         yield util.FileLoad(os.path.join(webdir, "sitemap7.html"))
         yield util.FileLoad(os.path.join(webdir, "right1.html"))
-        yield util.LoadAndParse(os.path.join(webdir, "samba-web", "latest_stable_release.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "latest_stable_release.html"))
         yield util.FileLoad(os.path.join(webdir, "right2.html"))
         yield util.FileLoad(os.path.join(webdir, "closingtags.html"))             
 

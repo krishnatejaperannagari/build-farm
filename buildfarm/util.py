@@ -42,18 +42,15 @@ def FileLoad(filename):
     finally:
         f.close()
 
-def LoadAndParse(filename):
+def SambaWebFileLoad(filename):
     """loads file and changes the links to suit buildfarm""" 
     f = open(filename, 'r')
     try:
-        links = f.read()
+        text = f.read()
     finally:
         f.close()
-    modifiedlinks = ""
-    for line in links.splitlines():
-        line = re.sub('href="/samba', 'href="http://www.samba.org/samba' ,line)
-        modifiedlinks += line + "\n"
-    return modifiedlinks
+    text = re.sub('href="/samba', 'href="http://www.samba.org/samba', text)
+    return text
 	
 
 def dhm_time(sec):
