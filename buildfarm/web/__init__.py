@@ -130,11 +130,6 @@ def build_link(myself, build):
     else:
         return "<div class='nocolor'>" + html_build_status(build.status()) + "</div>"
 
-def build_failed_link(myself, tree, build):
-    if build.has_log():
-        return "<a href='%s/failedbuild/%s/%s'>%s</a>" % (myself, tree, build.log_checksum(), html_build_status(build.status()))
-    else:
-        return "<div class='nocolor'>" + html_build_status(build.status()) + "</div>"
 
 def tree_uri(myself, tree):
     return "%s/tree/%s" % (myself, tree.name)
@@ -184,69 +179,6 @@ def subunit_to_buildfarm_result(subunit_result):
 def format_subunit_reason(reason):
     reason = re.sub("^\[\n+(.*?)\n+\]$", "\\1", reason)
     return "<div class=\"reason\">%s</div>" % reason
-
-
-def display_failed_log(myself, build):
-    try:
-        f = build.read_log()
-        try:
-            log = f.read()
-        finally:
-            f.close()
-    except LogFileMissing:
-        log = None
-    f = build.read_err()
-    try:
-        err = f.read()
-    finally:
-        f.close()
-
-    if err:
-        yield "<a href='%s/+stderr'><input type='button' value='Standard error (as plain text)' /></a>" % build_uri(myself, build)
-    if log:
-        yield "<p><a href='%s/+stdout'><input type='button' value='Standard output (as plain text)' /></a>" % build_uri(myself, build)
-
-    if err is not None:
-        yield "<h2>Error log:</h2>"
-        yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0"))
-
-    if log is not None:
-        errors_found = ''
-        warnings_found = ''
-        failures_found = ''
-        other_reasons = ''
-        for i, line in enumerate(log.splitlines()):
-            match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
-            if match:
-                if match.group(1):
-                    errors_found += 'Line number ' + str(i+1) + ': '
-                    errors_found += str(match.group(1))
-                    errors_found += '\n'
-                if match.group(2):
-                    warnings_found += 'Line number ' + str(i+1) + ': '
-                    warnings_found += str(match.group(2))
-                    warnings_found += '\n'
-                if match.group(3):
-                    failures_found += 'Line number ' + str(i+1) + ': '
-                    failures_found += str(match.group(3))
-                    failures_found += '\n'
-                if match.group(4):
-                    other_reasons += 'Line number ' + str(i+1) + ': '
-                    other_reasons += str(match.group(4))
-                    other_reasons += '\n'
-
-        if  errors_found != '':
-            yield "<h2>Errors</h2>\n"
-            yield "".join(make_collapsible_html('action', "Errors", "\n%s" % errors_found , "stderr-0"))
-        if  warnings_found != '':
-            yield "<h2>Warnings</h2>\n"
-            yield "".join(make_collapsible_html('action', "Warnings", "\n%s" % warnings_found, "stderr-0"))
-        if  failures_found != '':
-            yield "<h2>Failures</h2>\n"
-            yield "".join(make_collapsible_html('action', "Failures", "\n%s" % failures_found , "stderr-0"))
-        if  other_reasons != '':
-            yield "<h2>Other Reasons</h2>\n"
-            yield "".join(make_collapsible_html('action', "Other Reasons", "\n%s" % other_reasons, "stderr-0"))
 
 
 class LogPrettyPrinter(object):
@@ -504,6 +436,17 @@ class ViewBuildPage(BuildFarmPage):
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
+    def display_failed_log(self, log): 
+        if log is not None:
+            failure_reasons = ''
+            for i, line in enumerate(log.splitlines()):
+                match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|(.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*)", line, re.M|re.I)
+                if match:
+                    failure_reasons += 'Line number ' + str(i+1) + ': ' + str(match.group()) + '\n'
+            if  failure_reasons != '':
+                yield "<h2>Reasons For failure</h2>\n"
+                yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , "stderr-0"))
+
     def render(self, myself, build, plain_logs=False, limit=10):
         """view one build in detail"""
 
@@ -601,6 +544,14 @@ class ViewBuildPage(BuildFarmPage):
             if log is None:
                 yield "<h2>No build log available</h2>"
             else:
+                status = build.status()
+                show = False
+                for s in status.stages:
+                    if s.result != 0:
+                        show = True
+                        break
+                if show == True or "panic" in status.other_failures or "disk full" in status.other_failures or "timeout" in status.other_failures or "inconsistent test result" in status.other_failures:
+                         yield "".join(self.display_failed_log(log))
                 yield "<h2>Build log:</h2>\n"
                 yield print_log_pretty(log)
 
@@ -1031,7 +982,7 @@ class FailedBuildsPage(BuildFarmPage):
                     yield "<td>%s</td>" % build_platform_name
                     yield "<td>%s</td>" % host_link(myself, build.host)
                     yield "<td>%s</td>" % build.compiler
-                    yield "<td>%s</td>" % build_failed_link(myself, tree, build)
+                    yield "<td>%s</td>" % build_link(myself, build)
                     yield "</tr>"
                 except hostdb.NoSuchHost:
                     pass
@@ -1039,16 +990,8 @@ class FailedBuildsPage(BuildFarmPage):
                     break
         yield "</tbody></table>"
         yield "</div>"
-        if build_checksum != None:
-            try:
-                build = self.buildfarm.builds.get_by_checksum(build_checksum)
-            except NoSuchBuildError:
-                pass
-            else:
-                yield "".join(display_failed_log(myself,build))
  
          
-
 class BuildFarmApp(object):
 
     def __init__(self, buildfarm):
@@ -1245,19 +1188,7 @@ class BuildFarmApp(object):
                     start_response('200 OK', [
                         ('Content-type', 'text/html; charset=utf-8')])
                     yield "".join(self.html_page(form, page.render(myself, build, False, limit)))
-            elif fn == "failedbuild":
-                try:
-                    build_tree = wsgiref.util.shift_path_info(environ)
-                    build_checksum = wsgiref.util.shift_path_info(environ)
-                except NoSuchBuildError:
-                    start_response('404 Page Not Found', [
-                        ('Content-Type', 'text/html; charset=utf8')])
-                    yield "No build with checksum %s found" % build_checksum
-                    return
-                start_response('200 OK', [
-                    ('Content-type', 'text/html; charset=utf-8')])
-                page = FailedBuildsPage(self.buildfarm)
-                yield "".join(self.html_page(form, page.render_html(myself, build_tree, build_checksum)))
+
             elif fn in ("", None):
                 start_response('200 OK', [
                     ('Content-type', 'text/html; charset=utf-8')])
