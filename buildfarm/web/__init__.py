@@ -266,7 +266,13 @@ class LogPrettyPrinter(object):
         if not buf == "":
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
             log = re.sub("Running action\s+test", divhtml, log)
-        return "<pre>%s</pre>" % log
+
+        logsearch =  re.findall('<div class=.*?</pre></div></div>', log, re.S)
+        collapsiblelog = '' 
+        for i in range(len(logsearch)):
+            collapsiblelog += '\n' +logsearch[i]
+        log = re.sub('<div class=.*?</pre></div></div>', '', log, len(logsearch), re.S)
+        return "<pre>%s</pre>" % collapsiblelog + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, "stderr-0", "errorlog"))
 
 
 def print_log_pretty(log):
@@ -439,13 +445,25 @@ class ViewBuildPage(BuildFarmPage):
     def display_failed_log(self, log): 
         if log is not None:
             failure_reasons = ''
+            errors_found = ''
+            warnings_found = ''
+            failures_found = ''
+            other_reasons = ''
             for i, line in enumerate(log.splitlines()):
-                match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|(.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*)", line, re.M|re.I)
+                match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
                 if match:
-                    failure_reasons += 'Line number ' + str(i+1) + ': ' + str(match.group()) + '\n'
+                    if match.group(1):
+                        errors_found += 'Line number ' + str(i+1) + ': ' + str(match.group(1)) + '\n'
+                    if match.group(2):
+                        warnings_found += 'Line number ' + str(i+1) + ': ' + str(match.group(2)) + '\n'
+                    if match.group(3):
+                        failures_found += 'Line number ' + str(i+1) + ': ' + str(match.group(3)) + '\n'
+                    if match.group(4):
+                        other_reasons += 'Line number ' + str(i+1) + ': ' + str(match.group(4)) + '\n'
+            failure_reasons = errors_found + '\n' + warnings_found + '\n' + failures_found + '\n' + other_reasons
             if  failure_reasons != '':
                 yield "<h2>Reasons For failure</h2>\n"
-                yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , "stderr-0"))
+                yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , "stderr-0", "errorlog"))
 
     def render(self, myself, build, plain_logs=False, limit=10):
         """view one build in detail"""
@@ -535,6 +553,18 @@ class ViewBuildPage(BuildFarmPage):
             yield "<div id='actionList'>"
             # These can be pretty wide -- perhaps we need to
             # allow them to wrap in some way?
+
+            if log is not None:
+                status = build.status()
+                show = False
+                for s in status.stages:
+                    if s.result != 0:
+                        show = True
+                        break
+                if (show == True or "panic" in status.other_failures or "disk full" in status.other_failures or
+                   "timeout" in status.other_failures or "inconsistent test result" in status.other_failures):
+                         yield "".join(self.display_failed_log(log))
+
             if err == "":
                 yield "<h2>No error log available</h2>\n"
             else:
@@ -544,14 +574,6 @@ class ViewBuildPage(BuildFarmPage):
             if log is None:
                 yield "<h2>No build log available</h2>"
             else:
-                status = build.status()
-                show = False
-                for s in status.stages:
-                    if s.result != 0:
-                        show = True
-                        break
-                if show == True or "panic" in status.other_failures or "disk full" in status.other_failures or "timeout" in status.other_failures or "inconsistent test result" in status.other_failures:
-                         yield "".join(self.display_failed_log(log))
                 yield "<h2>Build log:</h2>\n"
                 yield print_log_pretty(log)
 
@@ -971,7 +993,8 @@ class FailedBuildsPage(BuildFarmPage):
                 if s.result != 0:
                     show = True
                     break
-            if show == True or "panic" in status.other_failures or "disk full" in status.other_failures or "timeout" in status.other_failures or "inconsistent test result" in status.other_failures:
+            if (show == True or "panic" in status.other_failures or "disk full" in status.other_failures or 
+               "timeout" in status.other_failures or "inconsistent test result" in status.other_failures):
                 index = index + 1
                 try:
                     build_platform_name = build_platform(build)
