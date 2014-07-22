@@ -544,7 +544,6 @@ class ViewBuildPage(BuildFarmPage):
         yield "<p><a href='%s/+stdout'>Standard output (as plain text)</a>, " % build_uri(myself, build)
         yield "<a href='%s/+stderr'>Standard error (as plain text)</a>" % build_uri(myself, build)
         yield "</p>"
-
         if not plain_logs:
             yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s"\
                   ";compiler=%s%s;plain=true' title='Switch to bland, non-javascript,"\
@@ -595,7 +594,6 @@ class ViewBuildPage(BuildFarmPage):
                 yield '<div id="buildLog"><pre>%s</pre></div>' % log
 
         yield '</div>'
-
 
 class ViewRecentBuildsPage(BuildFarmPage):
 
@@ -1003,16 +1001,19 @@ class FailedBuildsPage(BuildFarmPage):
                     yield "<td>%s</td>" % revision_link(myself, build.revision, build.tree)
                     yield "<td>%s</td>" % build.tree
                     yield "<td>%s</td>" % build_platform_name
-                    yield "<td>%s</td>" % host_link(myself, build.host)
-                    yield "<td>%s</td>" % build.compiler
+                    yield "<td><a href='%s/+stderr'>Standard error (as plain text)</a></td>" % build_uri(myself, build)
+                    yield "<td><a href='%s/+stdout'>Standard output (as plain text)</a></td>, " % build_uri(myself, build)
                     yield "<td>%s</td>" % build_link(myself, build)
                     yield "</tr>"
                 except hostdb.NoSuchHost:
                     pass
-                if index == 15:
-                    break
         yield "</tbody></table>"
         yield "</div>"
+'''
+                if index == 15:
+                    break
+'''
+
  
          
 class BuildFarmApp(object):

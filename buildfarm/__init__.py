@@ -157,7 +157,7 @@ class BuildFarm(object):
 
     def latest_tree_builds(self, tree):
         store = self._get_store()
-        return store.find(StormBuild, StormBuild.tree == tree).order_by(Desc(StormBuild.upload_time))        
+        return store.find(StormBuild).order_by(Desc(StormBuild.upload_time))        
 
     def _get_store(self):
         if self.store is not None:
