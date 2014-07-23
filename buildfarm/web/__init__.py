@@ -266,13 +266,7 @@ class LogPrettyPrinter(object):
         if not buf == "":
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
             log = re.sub("Running action\s+test", divhtml, log)
-
-        logsearch =  re.findall('<div class=.*?</pre></div></div>', log, re.S)
-        collapsiblelog = '' 
-        for i in range(len(logsearch)):
-            collapsiblelog += '\n' +logsearch[i]
-        log = re.sub('<div class=.*?</pre></div></div>', '', log, len(logsearch), re.S)
-        return "<pre>%s</pre>" % collapsiblelog + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, "stderr-0", "errorlog"))
+        return log
 
 
 def print_log_pretty(log):
@@ -444,26 +438,13 @@ class ViewBuildPage(BuildFarmPage):
 
     def display_failed_log(self, log): 
         if log is not None:
-            failure_reasons = ''
-            errors_found = ''
-            warnings_found = ''
-            failures_found = ''
-            other_reasons = ''
-            for i, line in enumerate(log.splitlines()):
-                match = re.search("(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
-                if match:
-                    if match.group(1):
-                        errors_found += 'Line number ' + str(i+1) + ': ' + str(match.group(1)) + '\n'
-                    if match.group(2):
-                        warnings_found += 'Line number ' + str(i+1) + ': ' + str(match.group(2)) + '\n'
-                    if match.group(3):
-                        failures_found += 'Line number ' + str(i+1) + ': ' + str(match.group(3)) + '\n'
-                    if match.group(4):
-                        other_reasons += 'Line number ' + str(i+1) + ': ' + str(match.group(4)) + '\n'
-            failure_reasons = errors_found + '\n' + failures_found + '\n' + other_reasons + '\n' + warnings_found
-            if  failure_reasons != '':
-                yield "<h2>Reasons For failure</h2>\n"
-                yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , "stderr-0", "errorlog"))
+#this is wrong
+            #log = re.sub("^.* error.*$", "^<h2 style='background-color:;'></h2>$", log, 0, re.M|re.I)
+            #log = re.sub("^.* warning.*$", "^<h2 style='background-color:;'></h2>$", log, 0, re.M|re.I)
+            #log = re.sub("^.*fail.*$", "^<h2 style='background-color:;'></h2>$", log, 0, re.M|re.I)
+            #log = re.sub("((^.* no .*$)|(^.* not .*$)|(^.* unknown .*$)|(^.* low .*$)|(^.* fault.*$)|(^.*invalid.*$)|(^.*incorrect.*$)|(^.*unable.*$)|(^.*cannot.*$)|(^.*conflict.*$)|(^.*corrupt.*$)|(^.*missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.*terminate.*$)|(^.*overflow.*$)|(^.*wrong.*$)|(^.*retry.*$)|(^.*forbidden.*$)|(^.*disable.*$)|(^.*disconnect.*$)|(^.*problem.*$))", "^<h2 style='background-color:;'></h2>$", log, 0, re.M|re.I)
+        
+            return log
 
     def render(self, myself, build, plain_logs=False, limit=10):
         """view one build in detail"""
@@ -555,27 +536,51 @@ class ViewBuildPage(BuildFarmPage):
             # allow them to wrap in some way?
 
             if log is not None:
-                status = build.status()
-                show = False
-                for s in status.stages:
-                    if s.result != 0:
-                        show = True
-                        break
-                if (show == True or "panic" in status.other_failures or "disk full" in status.other_failures or
-                   "timeout" in status.other_failures or "inconsistent test result" in status.other_failures):
-                         yield "".join(self.display_failed_log(log))
+                log = print_log_pretty(log)
+                logsearch =  re.findall("<div class='action unit PASSED.*?</pre></div></div>", log, re.S)
+                passedcollapsiblehtml = ''
+                for i in range(len(logsearch)):
+                    passedcollapsiblehtml += '\n' + logsearch[i]
+                log = re.sub("<div class='action unit PASSED.*?</pre></div></div>", "", log, len(logsearch), re.S)
+                logsearch =  re.findall("<div class='action unit FAILED.*?</pre></div></div>", log, re.S)
+                failedcollapsiblehtml = ''
+                for i in range(len(logsearch)):
+                    failedcollapsiblehtml += '\n' + self.display_failed_log(logsearch[i])
+                log = re.sub("<div class='action unit FAILED.*?</pre></div></div>", "", log, len(logsearch), re.S)
+                logsearch =  re.findall("<div class=.*?</pre></div></div>", log, re.S)
+                othercollapsiblehtml = ''
+                for i in range(len(logsearch)):
+                    if failedcollapsiblehtml != '':
+                        othercollapsiblehtml += '\n' + self.display_failed_log(logsearch[i])
+                    else:
+                        othercollapsiblehtml += '\n' + logsearch[i]
+                log = re.sub("<div class=.*?</pre></div></div>", "", log, len(logsearch), re.S)
+                log = passedcollapsiblehtml + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, "stderr-0", "errorlog"))
 
+                if failedcollapsiblehtml != '':
+                    yield "<h2>Failed part:</h2>"
+                    yield failedcollapsiblehtml
+                elif othercollapseiblehtml != '':
+                    yield "<h2>Failed part:</h2>"
+                    yield othercollapsiblehtml
+                
             if err == "":
                 yield "<h2>No error log available</h2>\n"
             else:
                 yield "<h2>Error log:</h2>"
                 yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
 
-            if log is None:
+            if log is None and othercollapsiblehtml == '':
                 yield "<h2>No build log available</h2>"
             else:
-                yield "<h2>Build log:</h2>\n"
-                yield print_log_pretty(log)
+                if failedcollapsiblehtml != '': 
+                    yield "<h2>Build log:</h2>\n"
+                    if othercollapsiblehtml != '':
+                        yield othercollapsiblehtml
+                    yield log
+                else:
+                   yield "<h2>Build log:</h2>\n"
+                   yield log
 
             yield "<p><small>Some of the above icons derived from the <a href='https://www.gnome.org'>Gnome Project</a>'s stock icons.</small></p>"
             yield "</div>"

@@ -25,6 +25,7 @@
 	padding: 10px;
 	border: 2px solid black;
 }
+/*
 #log div.unit.passed {	background-color: rgb(180, 255, 180); }
 #log div.unit.failed {	background-color: rgb(255, 180, 180); }
 #log div.unit.skipped {	background-color: rgb(180, 180, 255); }
@@ -34,7 +35,7 @@
 #log div.unit.error {	background-color: rgb(255, 180, 180); }
 #log div.unit.mistake {	background-color: rgb(180, 180, 255); }
 #log div.unit.pretest.ok {	background-color: rgb(180, 255, 180); }
-
+*/
 #log .unit.failed  .output {	display: block;}
 #log .unit.skipped .output {	display: block;}
 #log .unit.skipped .output {	display: block;}
