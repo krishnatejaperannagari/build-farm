@@ -436,37 +436,39 @@ class ViewBuildPage(BuildFarmPage):
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
-    def display_failed_log(self, logsearch):
+    def display_failed_log(self, logsearch, count):
 #TODO efficiency pattern to consider log = re.sub("^.* error.*$", "^<h2 style='background-color:;'></h2>$", log, 0, re.M|re.I) 
         if logsearch is not None:
              log = ''
              failure_reasons = ''
-             errors_found = ''
-             warnings_found = ''
-             failures_found = ''
-             other_reasons = ''
+             errors_found = 'Errors: \n'
+             warnings_found = 'Warnings: \n'
+             failures_found = 'Failures: \n'
+             other_reasons = 'Other Problems: \n'
              for i, line in enumerate(logsearch.splitlines()):
-                 match = re.search("(.*<.?div.*)|(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
+                 match = re.search("(.*<.?div.*)|(.* passed .*)|(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
                  if match:
                       if match.group(1):
                           log += str(line) + "\n"
                       if match.group(2):
-                          log += "<font color='red'><b><h3>" + str(i+1) + ': ' + str(line) + "</h3></b></font>" + "\n"
-                          errors_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                          log += str(i+1) + ': ' + str(line) + "\n"
                       if match.group(3):
-                          log += "<font color='blue'><b><h3>" + str(i+1) + ': ' + str(line) + "</h3></b></font>" + "\n"
-                          warnings_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                          log += "<br><font size='4' color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
+                          errors_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
                       if match.group(4):
-                          log += "<font color='red'><b><h3>" + str(i+1) + ': ' + str(line) + "</h3></b></font>" + "\n"
-                          failures_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                          log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
+                          warnings_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
                       if match.group(5):
-                          log += "<font color='blue'><b><h3>" + str(i+1) + ': ' + str(line) + "</h3></b></font>" + "\n"
+                          log += "<br><font size='4' color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
+                          failures_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                      if match.group(6):
+                          log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
                           other_reasons += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
                  else:
                       log += str(i+1) + ': ' + str(line) + "\n"
 
              failure_reasons = errors_found + "\n" + failures_found + "\n" + other_reasons + "\n" + warnings_found
-             log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , "10", "Failed")) + "<br>" + log
+             log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , count, "errorlog")) + "<br>" + log
              return log
 
     def render(self, myself, build, plain_logs=False, limit=10):
@@ -560,32 +562,37 @@ class ViewBuildPage(BuildFarmPage):
 #TODO eficiency
             if log is not None:
                 log = print_log_pretty(log)
-                logsearch =  re.findall("<div class='action unit PASSED.*?</pre></div></div>", log, re.S)
-                passedcollapsiblehtml = ''
-                for i in range(len(logsearch)):
-                    passedcollapsiblehtml += logsearch[i] + "<br>" 
-                log = re.sub("<div class='action unit PASSED.*?</pre></div></div>", "", log, len(logsearch), re.S)
-                logsearch =  re.findall("<div class='action unit FAILED.*?</pre></div></div>", log, re.S)
-                failedcollapsiblehtml = ''
-                for i in range(len(logsearch)):
-                    failedcollapsiblehtml += self.display_failed_log(logsearch[i])
-                log = re.sub("<div class='action unit FAILED.*?</pre></div></div>", "", log, len(logsearch), re.S)
-                logsearch =  re.findall("<div class=.*?</pre></div></div>", log, re.S)
-                othercollapsiblehtml = ''
-                for i in range(len(logsearch)):
-                    if failedcollapsiblehtml == '':
-                        othercollapsiblehtml += self.display_failed_log(logsearch[i])
-                    else:
-                        othercollapsiblehtml += logsearch[i] + "<br>" 
-                log = re.sub("<div class=.*?</pre></div></div>", "", log, len(logsearch), re.S)
-                log = passedcollapsiblehtml + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, "11", "PASSED"))
 
-                if failedcollapsiblehtml != '':
+                passedlogsearch =  re.findall("<div class='action unit PASSED.*?</pre></div></div>", log, re.S)
+                count = len(passedlogsearch)
+                log = re.sub("<div class='action unit PASSED.*?</pre></div></div>", "", log, len(passedlogsearch), re.S)
+                failedlogsearch =  re.findall("<div class='action unit FAILED.*?</pre></div></div>", log, re.S)
+                count += len(failedlogsearch)
+                log = re.sub("<div class='action unit FAILED.*?</pre></div></div>", "", log, len(failedlogsearch), re.S)
+                otherlogsearch =  re.findall("<div class=.*?</pre></div></div>", log, re.S)
+                count += len(otherlogsearch)
+                log = re.sub("<div class=.*?</pre></div></div>", "", log, len(otherlogsearch), re.S)
+     
+                failedcollapsiblehtml = ''
+                passedcollapsiblehtml = ''
+                count += 1
+                for i in range(len(failedlogsearch)):
+                    failedcollapsiblehtml += self.display_failed_log(failedlogsearch[i], count)
+                    count +=1
+                for i in range(len(otherlogsearch)):
+                    if failedcollapsiblehtml == '':
+                        failedcollapsiblehtml += self.display_failed_log(otherlogsearch[i], count)
+                        count += 1
+                    else:
+                        passedcollapsiblehtml += otherlogsearch[i] + "<br>"
+                for i in range(len(passedlogsearch)):
+                    passedcollapsiblehtml += passedlogsearch[i] + "<br>"
+
+                log = passedcollapsiblehtml + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, count, "errorlog"))
+
+            if failedcollapsiblehtml != '':
                     yield "<h2>Failed part:</h2>"
                     yield failedcollapsiblehtml
-                elif othercollapseiblehtml != '':
-                    yield "<h2>Failed part:</h2>"
-                    yield othercollapsiblehtml
                 
             if err == "":
                 yield "<h2>No error log available</h2>\n"
@@ -596,13 +603,6 @@ class ViewBuildPage(BuildFarmPage):
             if log is None:
                 yield "<h2>No build log available</h2>"
             else:
-                if failedcollapsiblehtml != '': 
-                    yield "<h2>Build log:</h2>\n"
-                    if othercollapsiblehtml != '':
-                        yield othercollapsiblehtml
-                    if log != '':
-                        yield log
-                elif log != '':
                    yield "<h2>Build log:</h2>\n"
                    yield log
 
