@@ -231,11 +231,15 @@ class LogPrettyPrinter(object):
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
+        pattern = re.compile("((Running action\s+([\w\-]+)$(?:\s^.*$)*?\sACTION\ (PASSED|FAILED):\ ([\w\-]+)$))", re.M)
+        search = pattern.findall(log)
+        log = pattern.sub("", log)
         pattern = re.compile("(Running action\s+([\w\-]+)$(?:\s^.*$)*?\sACTION\ (PASSED|FAILED):\ ([\w\-]+)$)", re.M)
-        log = pattern.sub(self._pretty_print, log)
+        for i in search:
+            log += pattern.sub(self._pretty_print, i[0])
         buf = ""
 
-        log = re.sub("""
+        pattern = re.compile("""(
               --==--==--==--==--==--==--==--==--==--==--.*?
               Running\ test\ ([\w\-=,_:\ /.&;]+).*?
               --==--==--==--==--==--==--==--==--==--==--
@@ -243,30 +247,71 @@ class LogPrettyPrinter(object):
               ==========================================.*?
               TEST\ (FAILED|PASSED|SKIPPED):.*?
               ==========================================\s+
-            """, self._format_stage, log)
+            )""")
+        search = pattern.findall(log)
+        log = pattern.sub("", log)
+        pattern = re.compile("""
+              --==--==--==--==--==--==--==--==--==--==--.*?
+              Running\ test\ ([\w\-=,_:\ /.&;]+).*?
+              --==--==--==--==--==--==--==--==--==--==--
+                  (.*?)
+              ==========================================.*?
+              TEST\ (FAILED|PASSED|SKIPPED):.*?
+              ==========================================\s+
+            """)
+        for i in search:
+            log += pattern.sub(self._pretty_print, i[0])
+        buf = ""
 
+        pattern = re.compile("((Running action test).*$\s((?:^.*$\s)*?)^((?:skip-)?testsuite: ))", re.M)
+        search = pattern.findall(log)
+        log = pattern.sub("", log)
         pattern = re.compile("(Running action test).*$\s((?:^.*$\s)*?)^((?:skip-)?testsuite: )", re.M)
-        log = pattern.sub(self._format_pretestsuite, log)
+        for i in search:
+            log += pattern.sub(self._format_pretestsuite, i[0])
 
-        log = re.sub("skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?",
-                self._format_skip_testsuite, log)
+        pattern = re.compile("(skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?)", re.M)
+        search = pattern.findall(log)
+        log = pattern.sub("", log)
+        pattern = re.compile("skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?", re.M)
+        for i in search:
+            log += pattern.sub(self._format_skip_testsuite, i[0])
 
         self.test_links = []
+        pattern = re.compile("(^testsuite: (.+)$\s((?:^.*$\s)*?)testsuite-(\w+): .*?(?:(\[$\s(?:^.*$\s)*?^\]$)|$))", re.M)
+        search = pattern.findall(log)
+        log = pattern.sub("", log)
         pattern = re.compile("^testsuite: (.+)$\s((?:^.*$\s)*?)testsuite-(\w+): .*?(?:(\[$\s(?:^.*$\s)*?^\]$)|$)", re.M)
-        log = pattern.sub(self._format_testsuite, log)
-        log = re.sub("""
+        for i in search:
+            log += pattern.sub(self._format_testsuite, i[0])
+        pattern = re.compile("""(
               ^test: ([\w\-=,_:\ /.&; \(\)]+).*?
               (.*?)
               (success|xfail|failure|skip|uxsuccess): [\w\-=,_:\ /.&; \(\)]+( \[.*?\])?.*?
-           """, self._format_test, log)
+           )""")
+        search = pattern.findall(log)
+        log = pattern.sub("", log)
+        pattern = re.compile("""
+              ^test: ([\w\-=,_:\ /.&; \(\)]+).*?
+              (.*?)
+              (success|xfail|failure|skip|uxsuccess): [\w\-=,_:\ /.&; \(\)]+( \[.*?\])?.*?
+           """)
+        for i in search:
+            log += pattern.sub(self._format_test, i[0])
 
         for tst in self.test_links:
             buf = "%s\n<A href='#%s'>%s</A>" % (buf, tst[1], tst[0])
 
         if not buf == "":
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
-            log = re.sub("Running action\s+test", divhtml, log)
-        return log
+            pattern = re.compile("(Running action\s+test)")
+            search = pattern.findall(log)
+            log = pattern.sub("", log)
+            pattern = re.compile("Running action\s+test")
+            for i in search:
+                log += pattern.sub(divhtml, i[0])
+        indicedlog = [log, self.indice]
+        return indicedlog
 
 
 def print_log_pretty(log):
@@ -436,7 +481,7 @@ class ViewBuildPage(BuildFarmPage):
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
-    def display_failed_log(self, logsearch, count):
+    def display_failed_log(self, logsearch, indice):
 #TODO efficiency pattern to consider log = re.sub("^.* error.*$", "^<h2 style='background-color:;'></h2>$", log, 0, re.M|re.I) 
         if logsearch is not None:
              log = ''
@@ -447,28 +492,29 @@ class ViewBuildPage(BuildFarmPage):
              other_reasons = 'Other Problems: \n'
              for i, line in enumerate(logsearch.splitlines()):
                  match = re.search("(.*<.?div.*)|(.* passed .*)|(.* error.*)|(.* warning.*)|(.*fail.*)|((.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.*invalid.*)|(.*incorrect.*)|(.*unable.*)|(.*cannot.*)|(.*conflict.*)|(.*corrupt.*)|(.*missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*))", line, re.M|re.I)
-                 if match:
-                      if match.group(1):
-                          log += str(line) + "\n"
-                      if match.group(2):
+                 if line != '':
+                     if match:
+                          if match.group(1):
+                              log += str(line) + "\n"
+                          if match.group(2):
+                              log += str(i+1) + ': ' + str(line) + "\n"
+                          if match.group(3):
+                              log += "<br><font size='4' color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
+                              errors_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                          if match.group(4):
+                              log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
+                              warnings_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                          if match.group(5):
+                              log += "<br><font size='4' color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
+                              failures_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                          if match.group(6):
+                              log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
+                              other_reasons += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
+                     else:
                           log += str(i+1) + ': ' + str(line) + "\n"
-                      if match.group(3):
-                          log += "<br><font size='4' color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
-                          errors_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                      if match.group(4):
-                          log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
-                          warnings_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                      if match.group(5):
-                          log += "<br><font size='4' color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
-                          failures_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                      if match.group(6):
-                          log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
-                          other_reasons += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                 else:
-                      log += str(i+1) + ': ' + str(line) + "\n"
 
              failure_reasons = errors_found + "\n" + failures_found + "\n" + other_reasons + "\n" + warnings_found
-             log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , count, "errorlog")) + "<br>" + log
+             log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , indice, "errorlog")) + "<br>" + log
              return log
 
     def render(self, myself, build, plain_logs=False, limit=10):
@@ -561,34 +607,33 @@ class ViewBuildPage(BuildFarmPage):
             # allow them to wrap in some way?
 #TODO eficiency
             if log is not None:
-                log = print_log_pretty(log)
+                indicedlog = print_log_pretty(log)
+                log = indicedlog[0]
+                indice = indicedlog[1]
 
-                passedlogsearch =  re.findall("<div class='action unit PASSED.*?</pre></div></div>", log, re.S)
-                count = len(passedlogsearch)
-                log = re.sub("<div class='action unit PASSED.*?</pre></div></div>", "", log, len(passedlogsearch), re.S)
-                failedlogsearch =  re.findall("<div class='action unit FAILED.*?</pre></div></div>", log, re.S)
-                count += len(failedlogsearch)
-                log = re.sub("<div class='action unit FAILED.*?</pre></div></div>", "", log, len(failedlogsearch), re.S)
-                otherlogsearch =  re.findall("<div class=.*?</pre></div></div>", log, re.S)
-                count += len(otherlogsearch)
-                log = re.sub("<div class=.*?</pre></div></div>", "", log, len(otherlogsearch), re.S)
+                passedlogsearch =  re.findall("<div class=.{,15}PASSED.*?</pre></div></div>", log, re.S|re.I)
+                log = re.sub("<div class=.{,15}PASSED.*?</pre></div></div>", "", log, 0, re.S|re.I)
+                failedlogsearch =  re.findall("<div class=.{,15}FAILED.*?</pre></div></div>", log, re.S|re.I)
+                log = re.sub("<div class=.{,15}FAILED.*?</pre></div></div>", "", log, 0, re.S|re.I)
+                otherlogsearch =  re.findall("<div class=.*?</pre></div></div>", log, re.S|re.I)
+                log = re.sub("<div class=.*?</pre></div></div>", "", log, 0, re.S|re.I)
      
                 failedcollapsiblehtml = ''
                 passedcollapsiblehtml = ''
-                count += 1
-                for i in range(len(failedlogsearch)):
-                    failedcollapsiblehtml += self.display_failed_log(failedlogsearch[i], count)
-                    count +=1
-                for i in range(len(otherlogsearch)):
+                indice += 1
+                for i in failedlogsearch:
+                    failedcollapsiblehtml += self.display_failed_log(i, indice) + "<br>" + "<br>"
+                    indice += 1
+                for i in otherlogsearch:
                     if failedcollapsiblehtml == '':
-                        failedcollapsiblehtml += self.display_failed_log(otherlogsearch[i], count)
-                        count += 1
+                        failedcollapsiblehtml += self.display_failed_log(i, indice) + "<br>" + "<br>"
+                        indice += 1
                     else:
-                        passedcollapsiblehtml += otherlogsearch[i] + "<br>"
-                for i in range(len(passedlogsearch)):
-                    passedcollapsiblehtml += passedlogsearch[i] + "<br>"
+                        passedcollapsiblehtml += i + "<br>" + "<br>"
+                for i in passedlogsearch:
+                    passedcollapsiblehtml += i + "<br>" + "<br>"
 
-                log = passedcollapsiblehtml + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, count, "errorlog"))
+                log = passedcollapsiblehtml + "".join(make_collapsible_html('action', "Other Details", "\n%s" % log, indice, "errorlog"))
 
             if failedcollapsiblehtml != '':
                     yield "<h2>Failed part:</h2>"
