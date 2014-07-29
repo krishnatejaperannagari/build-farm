@@ -189,6 +189,25 @@ class LogPrettyPrinter(object):
         self.passedbuilds = []
         self.otherbuilds = []
 
+        self.pattern1 = re.compile("(Running action\s+([\w\-]+)$(?:\s^.*$)*?\sACTION\ (PASSED|FAILED):\ ([\w\-]+)$)", re.M)
+        self.pattern2 = re.compile("""
+              --==--==--==--==--==--==--==--==--==--==--.*?
+              Running\ test\ ([\w\-=,_:\ /.&;]+).*?
+              --==--==--==--==--==--==--==--==--==--==--
+                  (.*?)
+              ==========================================.*?
+              TEST\ (FAILED|PASSED|SKIPPED):.*?
+              ==========================================\s+
+            """)
+        self.pattern3 = re.compile("(Running action test).*$\s((?:^.*$\s)*?)^((?:skip-)?testsuite: )", re.M)
+        self.pattern4 = re.compile("skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?")
+        self.pattern5 = re.compile("^testsuite: (.+)$\s((?:^.*$\s)*?)testsuite-(\w+): .*?(?:(\[$\s(?:^.*$\s)*?^\]$)|$)", re.M)
+        self.pattern6 = re.compile("""
+              ^test: ([\w\-=,_:\ /.&; \(\)]+).*?
+              (.*?)
+              (success|xfail|failure|skip|uxsuccess): [\w\-=,_:\ /.&; \(\)]+( \[.*?\])?.*?
+           """)
+
     def _pretty_print(self, m):
         output = m.group(1)
         actionName = m.group(2)
@@ -198,6 +217,7 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
+
         collapsiblehtml = "".join(make_collapsible_html('action', actionName, output, self.indice, status)) + "<br>"
         match = re.search("(failed)|(error)|(warning)|(mistake)", m.group(3), re.I)
         if match:
@@ -208,7 +228,7 @@ class LogPrettyPrinter(object):
                self.passedbuilds.append(collapsiblehtml)
            else:
                self.otherbuilds.append(collapsiblehtml)
-        return m.group()
+        return ""
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
@@ -223,20 +243,20 @@ class LogPrettyPrinter(object):
                self.passedbuilds.append(collapsiblehtml)
            else:
                self.otherbuilds.append(collapsiblehtml)
-        return m.group()
+        return ""
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped')) + "<br>"
         self.otherbuilds.append(collapsiblehtml)
-        return m.group()
+        return ""
 
     def _format_pretestsuite(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + "\n" + m.group(2) + "\n" + m.group(3) , self.indice, 'ok'))+ "<br>"
         #since status is ok
         self.passedbuilds.append(collapsiblehtml)
-        return m.group()
+        return ""
 
     def _format_testsuite(self, m):
         testName = m.group(1)
@@ -261,7 +281,7 @@ class LogPrettyPrinter(object):
                self.passedbuilds.append(collapsiblehtml)
            else:
                self.otherbuilds.append(collapsiblehtml)
-        return m.group()
+        return ""
 
     def _format_test(self, m):
         self.indice += 1
@@ -275,38 +295,18 @@ class LogPrettyPrinter(object):
                self.passedbuilds.append(collapsiblehtml)
            else:
                self.otherbuilds.append(collapsiblehtml)
-        return m.group()
+        return ""
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
-        pattern = re.compile("(Running action\s+([\w\-]+)$(?:\s^.*$)*?\sACTION\ (PASSED|FAILED):\ ([\w\-]+)$)", re.M)
-        log = pattern.sub(self._pretty_print, log)
+        log = self.pattern1.sub(self._pretty_print, log)
         buf = ""
-
-        log = re.sub("""
-              --==--==--==--==--==--==--==--==--==--==--.*?
-              Running\ test\ ([\w\-=,_:\ /.&;]+).*?
-              --==--==--==--==--==--==--==--==--==--==--
-                  (.*?)
-              ==========================================.*?
-              TEST\ (FAILED|PASSED|SKIPPED):.*?
-              ==========================================\s+
-            """, self._format_stage, log)
-
-        pattern = re.compile("(Running action test).*$\s((?:^.*$\s)*?)^((?:skip-)?testsuite: )", re.M)
-        log = pattern.sub(self._format_pretestsuite, log)
-
-        log = re.sub("skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?",
-                self._format_skip_testsuite, log)
-
+        log = self.pattern2.sub(self._format_stage, log)
+        log = self.pattern3.sub(self._format_pretestsuite, log)
+        log = self.pattern4.sub(self._format_skip_testsuite, log)
         self.test_links = []
-        pattern = re.compile("^testsuite: (.+)$\s((?:^.*$\s)*?)testsuite-(\w+): .*?(?:(\[$\s(?:^.*$\s)*?^\]$)|$)", re.M)
-        log = pattern.sub(self._format_testsuite, log)
-        log = re.sub("""
-              ^test: ([\w\-=,_:\ /.&; \(\)]+).*?
-              (.*?)
-              (success|xfail|failure|skip|uxsuccess): [\w\-=,_:\ /.&; \(\)]+( \[.*?\])?.*?
-           """, self._format_test, log)
+        log = self.pattern5.sub(self._format_testsuite, log)
+        log = self.pattern6.sub(self._format_test, log)
 
         for tst in self.test_links:
             buf = "%s\n<A href='#%s'>%s</A>" % (buf, tst[1], tst[0])
