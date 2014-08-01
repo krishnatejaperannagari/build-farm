@@ -504,7 +504,7 @@ class ViewBuildPage(BuildFarmPage):
              failures_found = ''
              other_reasons_found = ''
              for i, line in enumerate(logsearch.splitlines()):
-                 match = re.search("(.*<.?div.*)|((.* pass.*)|(.* success.*))|((.* error.*)|(error.*))|((.* fail.*))|(fail.*)|((.* warning.*)|(.*fail.*)|(.*error.*)|(.* no .*)|(.* not .*)|(.* unknown .*)|(.* low .*)|(.* fault.*)|(.* invalid.*)|(.* incorrect.*)|(.* unable.*)|(.* cannot.*)|(.* conflict.*)|(.* corrupt.*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.* wrong.*)|(.*retry.*)|(.*forbidden.*)|(.*disable.*)|(.*disconnect.*)|(.*problem.*)|(.*exception.*))|(.*warning.*)", line, re.M|re.I)
+                 match = re.match("(.*<.?div.*)|((.*passed.*)|(.*success.*))|((.* error.*)|(error.*))|((.* fail.*))|(fail.*)|((.* warning.*)|(warning .*)|(.*no .*)|(.*not .*)|(.*unknown .*)|(.* unknown.*)|(.*low .*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.*unable .*)|(.*cannot .*)|(.*conflict .*)|(.* conflict.*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong .*)|(.* wrong.*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*problem.*)|(.*exception.*))|(.*warning.*)", line, re.M|re.I)
                  if line != '':
                      if match:
                           if match.group(1):
@@ -520,7 +520,7 @@ class ViewBuildPage(BuildFarmPage):
                           if match.group(11):
                               log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
                               other_reasons_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                          if match.group(38):
+                          if match.group(42):
                               log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
                               warnings_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
                      else:
@@ -528,23 +528,23 @@ class ViewBuildPage(BuildFarmPage):
 
              if errors_found != '' and failures_found != '':
                   failure_reasons = 'Errors: \n' + errors_found + '\n' + "Failures: \n" + failures_found
-                  self.allfailurereasons += '<font color="red">Errors in '+ str(self.div_count) + ' collapsible part:</font> \n' + errors_found + '\n' + '<font color="red">Failures in '+ str(self.div_count) + ' collapsible part:</font> \n' + failures_found + '<br>'
+                  self.allfailurereasons += '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errors_found + '\n' + '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + failures_found + '<br>'
              elif errors_found != '':
                   failure_reasons = 'Errors: \n' + errors_found
-                  self.allfailurereasons += '<font color="red">Errors in '+ str(self.div_count) + ' collapsible part:</font> \n' + errors_found + '<br>'
+                  self.allfailurereasons += '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errors_found + '<br>'
              elif failures_found != '':
                   failure_reasons =  'Failures: \n' + failures_found
-                  self.allfailurereasons +=  '<font color="red">Failures in '+ str(self.div_count) + ' collapsible part:</font> \n' + failures_found + '<br>'
+                  self.allfailurereasons +=  '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + failures_found + '<br>'
              
              if other_reasons_found != '' and warnings_found != '':
                   other_reasons = 'Other Problems: \n' + other_reasons_found + '\n' + 'Warnings: \n' + warnings_found
-                  self.allotherreasons += '<font color="red">Other Problems in '+ str(self.div_count) + ' collapsible part:</font> \n' + other_reasons_found + '\n' + '<font color="red">Warnings in '+ str(self.div_count) + ' collapsible part:</font> \n' + warnings_found + '<br>'
+                  self.allotherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + other_reasons_found + '\n' + '<font color="red"><b>Warnings in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + warnings_found + '<br>'
              elif other_reasons_found != '':
                   other_reasons = 'Other Problems: \n' + other_reasons_found
-                  self.allotherreasons += '<font color="red">Other Problems in '+ str(self.div_count) + ' collapsible part:</font> \n' + other_reasons_found + '<br>'
+                  self.allotherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + other_reasons_found + '<br>'
              elif warnings_found != '':
                   other_reasons = 'Warnings: \n' +  warnings_found
-                  self.allotherreasons += '<font color="red">Warnings in '+ str(self.div_count) + ' collapsible part:</font> \n' +  warnings_found + '<br>'
+                  self.allotherreasons += '<font color="red"><b>Warnings in '+ str(self.div_count) + ' collapsible part:</b></font> \n' +  warnings_found + '<br>'
 
              if failure_reasons != '' and other_reasons != '':
                   other_reasons = "".join(make_collapsible_html('action', "Other Reasons", "\n%s" % other_reasons , indice + 1, "errorlog"))
@@ -682,7 +682,7 @@ class ViewBuildPage(BuildFarmPage):
                         yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % self.allfailurereasons , indice + 1, "errorlog"))
                         yield "<br>"
                     if self.allotherreasons != "":
-                        yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % self.allotherreasons , indice + 2, "errorlog"))
+                        yield "".join(make_collapsible_html('action', "Other Messages", "\n%s" % self.allotherreasons , indice + 2, "errorlog"))
 
             if failedcollapsiblehtml != '':
                     yield "<h2>Failed part:</h2>"
@@ -734,7 +734,7 @@ class ViewBuildPage(BuildFarmPage):
                 failures = ''
                 otherproblems = ''
                 warnings = ''
-                match = re.findall("((^.* pass.*$)|(^.* success.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$))|(^fail.*$)|((^.* warning.*$)|(^.*fail.*$)|(^.*error.*$)|(^.* no .*$)|(^.* not .*$)|(^.* unknown .*$)|(^.* low .*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.* unable.*$)|(^.* cannot.*$)|(^.* conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.*terminate.*$)|(^.*overflow.*$)|(^.* wrong.*$)|(^.*retry.*$)|(^.*forbidden.*$)|(^.*disable.*$)|(^.*disconnect.*$)|(^.*problem.*$)|(^.*exception.*$))|(^.*warning.*$)", log, re.M|re.I)
+                match = re.findall("((^.*passed.*$)|(^.*success.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$))|(^fail.*$)|((^.* warning.*$)|(^warning .*$)|(^.*no .*$)|(^.*not .*$)|(^.*unknown .*$)|(^.* unknown.*$)|(^.*low .*$)|(^.* fault.*$)|(^.*invalid.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*incorrect .*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict .*$)|(^.* conflict.*$)|(^.* corrupt.*$)|(^.*missing .*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.*terminate.*$)|(^.*overflow.*$)|(^.*wrong .*$)|(^.* wrong.*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*problem.*$)|(^.*exception.*$))|(^.*warning.*$)", log, re.M|re.I)
                 if match:
                     for i in match:
                         if i[3] != '':
@@ -743,8 +743,8 @@ class ViewBuildPage(BuildFarmPage):
                             failures += str(i[6]) + '<br>'
                         if i[9] != '':
                             otherproblems += str(i[9]) + '<br>'
-                        if i[36] != '':
-                            warnings += str(i[36]) + '<br>'
+                        if i[40] != '':
+                            warnings += str(i[40]) + '<br>'
                 yield "<h2>Problamatic Messages in log:</h2>"
                 if errors != '':
                    yield "".join(make_collapsible_html('action', "Errors found:", "\n%s" % errors, 1))
