@@ -566,8 +566,7 @@ class BuildResultStore(object):
         os.link(build.basename+".log", new_basename+".log")
         if os.path.exists(build.basename+".err"):
             os.link(build.basename+".err", new_basename+".err")
-        new_build = StormBuild(new_basename, build.tree, build.host,
-            build.compiler, rev)
+        new_build = StormBuild(new_basename, build.tree, build.host, build.compiler, rev)
         new_build.checksum = build.log_checksum()
         new_build.upload_time = build.upload_time
         new_build.status_str = build.status().__serialize__()
