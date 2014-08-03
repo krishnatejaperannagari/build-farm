@@ -376,7 +376,7 @@ def web_paths(t, paths):
     if t.scm == "git":
         ret = ""
         for path in paths:
-            ret += " <a href=\"%s/?p=%s;a=history;f=%s%s;h=%s;hb=%s\">%s</a>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp" % (GITWEB_BASE, t.repo, t.subdir, path, t.branch, t.branch, path)
+            ret += " <a href=\"%s/?p=%s;a=history;f=%s%s;h=%s;hb=%s\">%s</a>&nbsp;" % (GITWEB_BASE, t.repo, t.subdir, path, t.branch, t.branch, path)
         return ret
     else:
         raise Exception("Unknown scm %s" % t.scm)
@@ -442,7 +442,7 @@ class ViewBuildPage(BuildFarmPage):
                 build_link(myself, old_build),
                 util.dhm_time(old_build.age))
 
-        yield "</tbody></table><br>\n"
+        yield "</tbody></table>\n"
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
@@ -847,11 +847,10 @@ class HistoryPage(BuildFarmPage):
         <div class=\"diff\">
             <span class=\"html\"><a href=\"%s?function=diff;tree=%s;date=%s;%s\">show diffs</a></span>
         <br />
-            <span class=\"text\"><a href=\"%s?function=text_diff;tree=%s;date=%s;%s\">download diffs</a></span>
+            <span class=\"text\"><a href=\"%s?function=text_diff;tree=%s;date=%s;%s\">download diffs</a></span><br />
+            <span class=\"label\">Message:</span><br />
             <div class=\"history_log_message\">
-                <br>
                 <pre>%s</pre>
-                <br>
             </div>
         </div>
         <div class=\"author\">
@@ -922,6 +921,7 @@ class DiffPage(HistoryPage):
         changes = branch.changes_summary(revision)
         yield "".join(self.history_row_html(myself, entry, t, changes))
         diff = highlight(diff, DiffLexer(), HtmlFormatter())
+        yield "<h2>Diff Result:</h2>"
         yield "<pre>%s</pre>" % diff.encode("utf-8")
 
 
@@ -991,23 +991,21 @@ class BuildFarmApp(object):
         yield "<div id='newbuildmenu'>\n"
         host_dict = {}
         for h in self.buildfarm.hostdb.hosts():
-                 host_dict[h.name] = "%s-%s" % (h.platform.encode("utf-8"), h.name)
+            host_dict[h.name] = "%s-%s" % (h.platform.encode("utf-8"), h.name)
         yield "".join(select("host", host_dict, default=host))
-        yield "<br/>\n<br/>\n"
+        yield "<br/><br/>"
 
         tree_dict = {}
         for t in self.buildfarm.trees.values():
-                tree_dict[t.name] = "%s:%s" % (t.name, t.branch)
+            tree_dict[t.name] = "%s:%s" % (t.name, t.branch)
         yield "".join(select("tree", tree_dict, default=tree))
-        yield "<br/>\n<br/>\n"
+        yield "<br/><br/>"
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
-        yield "<input type='submit' name='function' value='View Build' style='position: absolute;right: 3px'/>"
-        yield "<br/>\n<br/>\n"
-        yield "<input type='submit' name='function' value='View Host'/>"
-        yield "<input type='submit' name='function' value='Recent Checkins' style='position: absolute;right: 3px'/>"
-        yield "<br/>\n<br/>\n"
-        yield "<input type='submit' name='function' value='Summary'/>"
-        yield "<input type='submit' name='function' value='Recent Builds' style='position: absolute;right: 3px'/>"
+        yield "<br/><br/><br/><input type='submit' name='function' value='View Build'/>"
+        yield "<input type='submit' name='function' value='View Host' style='position: absolute;right: 3px'/><br/><br/>"
+        yield "<input type='submit' name='function' value='Recent Checkins'/>"
+        yield "<input type='submit' name='function' value='Summary' style='position: absolute;right: 3px'/><br/><br/>"
+        yield "<input type='submit' name='function' value='Recent Builds'/>"
         yield "</div>\n"
         yield "</form>\n"
 

@@ -212,15 +212,16 @@ div.build-section {
 .history_row { 
         margin-bottom: 30px;
         padding: 2px;
-        line-height:160%;
+        line-height: 160%;
 }
 
 .history_row .label {
         font-weight: bold;
+	color: #c90000;
 }
 
 .history_row .date{
-	color:#b30808;
+	color: #c90000;
 }
 
 .history_row .date,
