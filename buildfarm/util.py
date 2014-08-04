@@ -18,6 +18,7 @@
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 import re
+import os
 
 def load_list(fname):
     """load a list from a file, using : to separate"""
@@ -51,7 +52,31 @@ def SambaWebFileLoad(filename):
         f.close()
     text = re.sub('href="/samba', 'href="http://www.samba.org/samba', text)
     return text
-	
+
+class Sitemap(object):
+
+    def __init__(self, webdir):
+        self.webdir = webdir
+        
+    def file_load(self, filename):
+        self.filename = os.path.join(self.webdir, filename)
+        f = open(self.filename, 'r')
+        try:
+            text = f.read()
+        finally:
+            f.close()
+        text = re.sub('<!--#include virtual="/samba/(.*)" -->', self.add_virtual_headers, text)
+        return text
+
+    def add_virtual_headers(self, m):
+        self.filename = os.path.join(self.webdir, m.group(1))
+        f = open(self.filename, 'r')
+        try:
+            text = f.read()
+        finally:
+            f.close()
+        text = re.sub('href="/samba', 'href="http://www.samba.org/samba', text)
+        return text
 
 def dhm_time(sec):
     """display a time as days, hours, minutes"""

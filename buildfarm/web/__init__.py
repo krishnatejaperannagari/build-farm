@@ -44,7 +44,7 @@ from buildfarm.build import (
     NoSuchBuildError,
     NoTestOutput,
     )
-
+from buildfarm.util import Sitemap
 import cgi
 from pygments import highlight
 from pygments.lexers.text import DiffLexer
@@ -1040,20 +1040,11 @@ class BuildFarmApp(object):
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_hack_samba_closed.html"))
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_contact_samba_closed.html"))
         yield util.FileLoad(os.path.join(webdir, "bannernav2.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_relatedsites_samba_closed.html"))
+        yield util.FileLoad(os.path.join(webdir, "bannernav3.html"))
         yield "".join(lines)
-        yield util.FileLoad(os.path.join(webdir, "sitemap1.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_think_samba_raw.html"))
-        yield util.FileLoad(os.path.join(webdir, "sitemap2.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_get_samba_raw.html"))
-        yield util.FileLoad(os.path.join(webdir, "sitemap3.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_learn_samba_raw.html"))
-        yield util.FileLoad(os.path.join(webdir, "sitemap4.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_talk_samba_raw.html"))
-        yield util.FileLoad(os.path.join(webdir, "sitemap5.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_hack_samba_raw.html"))
-        yield util.FileLoad(os.path.join(webdir, "sitemap6.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "menu_contact_samba_raw.html"))
-        yield util.FileLoad(os.path.join(webdir, "sitemap7.html"))
+        sitemap = Sitemap(os.path.join(webdir, "samba-web"))
+        yield sitemap.file_load("menu_sitemap_samba_closed.html") 
         yield util.FileLoad(os.path.join(webdir, "right1.html"))
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web", "latest_stable_release.html"))
         yield util.FileLoad(os.path.join(webdir, "right2.html"))
