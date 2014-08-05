@@ -984,7 +984,7 @@ class BuildFarmApp(object):
     def __init__(self, buildfarm):
         self.buildfarm = buildfarm
 
-    def main_menu(self, tree, host, compiler):
+    def main_menu(self, tree, host, compiler, function):
         """main page"""
 
         yield "<form method='GET'>\n"
@@ -1001,13 +1001,16 @@ class BuildFarmApp(object):
         yield "".join(select("tree", tree_dict, default=tree))
         yield "<br/><br/>"
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
-        yield "<br/><br/><br/><input type='submit' name='function' value='View Build'/><br/><br/>"
-        yield "<input type='submit' name='function' value='Summary'/><br/><br/>"
-        yield "<input type='submit' name='function' value='View Host'/><br/><br/>"
-        yield "<input type='submit' name='function' value='Recent Builds'/><br/><br/>"
-        yield "<input type='submit' name='function' value='Recent Checkins'/>"
-        yield "</div>\n"
-        yield "</form>\n"
+        yield "<br/><br/>"
+        functions_dict = {
+            'View Build': 'View Build', 'Summary': 'Summary', 'View Host': 'View Host', 
+            'Recent Builds': 'Recent Builds', 'Recent Checkins': 'Recent Checkins',
+            }
+        yield "".join(select("function", functions_dict, default=function))
+        yield "<br/><br/>"
+        yield "<br/><input type='submit' name='search' value='Go'/>"
+        yield "</div>"
+        yield "</form>"
 
     def html_page(self, form, lines):
         yield "<html>\n"
@@ -1031,7 +1034,8 @@ class BuildFarmApp(object):
         tree = get_param(form, "tree")
         host = get_param(form, "host")
         compiler = get_param(form, "compiler")
-        yield "".join(self.main_menu(tree, host, compiler))
+        function = get_param(form, "function")
+        yield "".join(self.main_menu(tree, host, compiler, function))
         yield util.FileLoad(os.path.join(webdir, "bannernav1.html"))
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_think_samba_closed.html")
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_get_samba_closed.html")
