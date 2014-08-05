@@ -43,40 +43,23 @@ def FileLoad(filename):
     finally:
         f.close()
 
-def SambaWebFileLoad(filename):
-    """loads file and changes the links to suit buildfarm""" 
-    f = open(filename, 'r')
+def SambaWebFileLoad(webdir, filename):
+    """loads file and changes the links to suit buildfarm"""
+    f = open(os.path.join(webdir, filename), 'r')
     try:
         text = f.read()
     finally:
         f.close()
+    def add_virtual_headers(m): 
+        f = open(os.path.join(webdir, m.group(1)), 'r')
+        try:
+            text = f.read()
+        finally:
+            f.close()
+        return text
+    text = re.sub('<!--#include virtual="/samba/(.*)" -->',add_virtual_headers , text)
     text = re.sub('href="/samba', 'href="http://www.samba.org/samba', text)
     return text
-
-class Sitemap(object):
-
-    def __init__(self, webdir):
-        self.webdir = webdir
-        
-    def file_load(self, filename):
-        self.filename = os.path.join(self.webdir, filename)
-        f = open(self.filename, 'r')
-        try:
-            text = f.read()
-        finally:
-            f.close()
-        text = re.sub('<!--#include virtual="/samba/(.*)" -->', self.add_virtual_headers, text)
-        return text
-
-    def add_virtual_headers(self, m):
-        self.filename = os.path.join(self.webdir, m.group(1))
-        f = open(self.filename, 'r')
-        try:
-            text = f.read()
-        finally:
-            f.close()
-        text = re.sub('href="/samba', 'href="http://www.samba.org/samba', text)
-        return text
 
 def dhm_time(sec):
     """display a time as days, hours, minutes"""
