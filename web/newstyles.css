@@ -123,8 +123,8 @@ pre::-webkit-scrollbar-thumb
 /*form*/
 #newbuildmenu{
  	position: absolute;
-        right: 20px;
-        top: 230px;
+        left: 10px;
+        top: 590px;
 	z-index: 10;
         font-size: 12px;
         line-height: 60%;
@@ -132,7 +132,7 @@ pre::-webkit-scrollbar-thumb
 
 #newbuildmenu select{
  	border: 1px solid #8f9994;
-        width: 190px;
+        width: 120px;
 }
 
 .newform button,
@@ -177,15 +177,6 @@ background-image: url(bgBoxSpecialNew.gif);
         left: 8px;
         top: 16px;
         margin: 0 0 16px;
-}
-
-.relatedLeftContent a:link,
-.relatedLeftContent a:visited,
-.relatedLeftContent a:active,
-.relatedLeftContent a[href]:hover {
-	color: #045d9a;
-	font-size: 11px;
-	line-height: 15px;
 }
 
 .relatedLeftBottom{

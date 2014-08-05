@@ -1001,11 +1001,11 @@ class BuildFarmApp(object):
         yield "".join(select("tree", tree_dict, default=tree))
         yield "<br/><br/>"
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
-        yield "<br/><br/><br/><input type='submit' name='function' value='View Build'/>"
-        yield "<input type='submit' name='function' value='View Host' style='position: absolute;right: 3px'/><br/><br/>"
+        yield "<br/><br/><br/><input type='submit' name='function' value='View Build'/><br/><br/>"
+        yield "<input type='submit' name='function' value='Summary'/><br/><br/>"
+        yield "<input type='submit' name='function' value='View Host'/><br/><br/>"
+        yield "<input type='submit' name='function' value='Recent Builds'/><br/><br/>"
         yield "<input type='submit' name='function' value='Recent Checkins'/>"
-        yield "<input type='submit' name='function' value='Summary' style='position: absolute;right: 3px'/><br/><br/>"
-        yield "<input type='submit' name='function' value='Recent Builds'/>"
         yield "</div>\n"
         yield "</form>\n"
 
@@ -1040,13 +1040,9 @@ class BuildFarmApp(object):
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_hack_samba_closed.html")
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_contact_samba_closed.html")
         yield util.FileLoad(os.path.join(webdir, "bannernav2.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_relatedsites_samba_closed.html")
-        yield util.FileLoad(os.path.join(webdir, "bannernav3.html"))
         yield "".join(lines)
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_sitemap_samba_closed.html")
-        yield util.FileLoad(os.path.join(webdir, "right1.html"))
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "latest_stable_release.html")
-        yield util.FileLoad(os.path.join(webdir, "right2.html"))
+        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "footer.html")
         yield util.FileLoad(os.path.join(webdir, "closingtags.html"))             
 
     def __call__(self, environ, start_response):
