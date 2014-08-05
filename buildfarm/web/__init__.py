@@ -497,8 +497,6 @@ class ViewBuildPage(BuildFarmPage):
     def display_failed_log(self, logsearch, indice):
         if logsearch is not None:
              log = ''
-             failure_reasons = ''
-             other_reasons = ''
              errors_found = ''
              warnings_found = ''
              failures_found = ''
@@ -527,33 +525,19 @@ class ViewBuildPage(BuildFarmPage):
                           log += str(i+1) + ': ' + str(line) + "\n"
 
              if errors_found != '' and failures_found != '':
-                  failure_reasons = 'Errors: \n' + errors_found + '\n' + "Failures: \n" + failures_found
                   self.allfailurereasons += '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errors_found + '\n' + '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + failures_found + '<br>'
              elif errors_found != '':
-                  failure_reasons = 'Errors: \n' + errors_found
                   self.allfailurereasons += '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errors_found + '<br>'
              elif failures_found != '':
-                  failure_reasons =  'Failures: \n' + failures_found
                   self.allfailurereasons +=  '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + failures_found + '<br>'
              
              if other_reasons_found != '' and warnings_found != '':
-                  other_reasons = 'Other Problems: \n' + other_reasons_found + '\n' + 'Warnings: \n' + warnings_found
                   self.allotherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + other_reasons_found + '\n' + '<font color="red"><b>Warnings in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + warnings_found + '<br>'
              elif other_reasons_found != '':
-                  other_reasons = 'Other Problems: \n' + other_reasons_found
                   self.allotherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + other_reasons_found + '<br>'
              elif warnings_found != '':
-                  other_reasons = 'Warnings: \n' +  warnings_found
                   self.allotherreasons += '<font color="red"><b>Warnings in '+ str(self.div_count) + ' collapsible part:</b></font> \n' +  warnings_found + '<br>'
 
-             if failure_reasons != '' and other_reasons != '':
-                  other_reasons = "".join(make_collapsible_html('action', "Other Reasons", "\n%s" % other_reasons , indice + 1, "errorlog"))
-                  failure_reasons = failure_reasons + "\n" + other_reasons
-                  log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , indice + 2, "errorlog")) + "<br>" + log + "<br>"
-             elif failure_reasons != '':
-                  log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % failure_reasons , indice + 1, "errorlog")) + "<br>" + log + "<br>"                  
-             elif other_reasons != '':
-                  log = "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % other_reasons , indice + 1, "errorlog")) + "<br>" + log + "<br>"
              return log
 
     def render(self, myself, build, plain_logs=0, limit=10):
@@ -658,9 +642,6 @@ class ViewBuildPage(BuildFarmPage):
 
                 failedcollapsiblehtml = ''
                 passedcollapsiblehtml = ''
-                failedbuilds.sort(key=len)
-                passedbuilds.sort(key=len)
-                otherbuilds.sort(key=len)
 
                 for i in failedbuilds:
                     failedcollapsiblehtml += self.display_failed_log(i, indice)
