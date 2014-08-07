@@ -502,7 +502,7 @@ class ViewBuildPage(BuildFarmPage):
              failures_found = ''
              other_reasons_found = ''
              for i, line in enumerate(logsearch.splitlines()):
-                 match = re.match("(.*<.?div.*)|((.*passed.*)|(.*success.*))|((.* error.*)|(error.*))|((.* fail.*))|(fail.*)|((.* warning.*)|(warning .*)|(.*no .*)|(.*not .*)|(.*unknown .*)|(.* unknown.*)|(.*low .*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.*unable .*)|(.*cannot .*)|(.*conflict .*)|(.* conflict.*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong .*)|(.* wrong.*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*problem.*)|(.*exception.*))|(.*warning.*)", line, re.M|re.I)
+                 match = re.match("(.*<.?div.*)|((.*passed.*)|(.*success.*))|((.* error .*)|(.* error)|(error .*))|((.* fail.*)|(fail.*))|((.* warning.*)|(warning .*)|(.*no .*)|(.*not .*)|(.*unknown .*)|(.* unknown.*)|(.*low .*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.*unable .*)|(.*cannot .*)|(.*conflict .*)|(.* conflict.*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong .*)|(.* wrong.*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*problem.*)|(.*exception.*))|((.*warning.*)|(.*error.*)|(.*fail))", line, re.M|re.I)
                  if line != '':
                      if match:
                           if match.group(1):
@@ -512,13 +512,13 @@ class ViewBuildPage(BuildFarmPage):
                           if match.group(5):
                               log += "<br><font color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
                               errors_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                          if match.group(8):
+                          if match.group(9):
                               log += "<br><font color='red'><b>" + str(i+1) + ': ' + str(line) + "</b></font><br>" + "\n"
                               failures_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                          if match.group(11):
+                          if match.group(12):
                               log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
                               other_reasons_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
-                          if match.group(42):
+                          if match.group(43):
                               log += "<font color='blue'><b>" + str(i+1) + ': ' + str(line) + "</b></font>" + "\n"
                               warnings_found += 'Line number ' + str(i+1) + ': ' + str(line) + "\n"
                      else:
@@ -715,17 +715,17 @@ class ViewBuildPage(BuildFarmPage):
                 failures = ''
                 otherproblems = ''
                 warnings = ''
-                match = re.findall("((^.*passed.*$)|(^.*success.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$))|(^fail.*$)|((^.* warning.*$)|(^warning .*$)|(^.*no .*$)|(^.*not .*$)|(^.*unknown .*$)|(^.* unknown.*$)|(^.*low .*$)|(^.* fault.*$)|(^.*invalid.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*incorrect .*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict .*$)|(^.* conflict.*$)|(^.* corrupt.*$)|(^.*missing .*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.*terminate.*$)|(^.*overflow.*$)|(^.*wrong .*$)|(^.* wrong.*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*problem.*$)|(^.*exception.*$))|(^.*warning.*$)", log, re.M|re.I)
+                match = re.findall("((^.*passed.*$)|(^.*success.*$))|((^.* error .*$)|(^.* error$)|(^error .*$))|((^.* fail.*$))|(^fail.*$)|((^.* warning.*$)|(^warning .*$)|(^.*no .*$)|(^.*not .*$)|(^.*unknown .*$)|(^.* unknown.*$)|(^.*low .*$)|(^.* fault.*$)|(^.*invalid.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*incorrect .*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict .*$)|(^.* conflict.*$)|(^.* corrupt.*$)|(^.*missing .*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.*terminate.*$)|(^.*overflow.*$)|(^.*wrong .*$)|(^.* wrong.*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*problem.*$)|(^.*exception.*$))|((^.*warning.*$)|(^.*error.*)|(^.*fail$))", log, re.M|re.I)
                 if match:
                     for i in match:
                         if i[3] != '':
                             errors += str(i[3]) + '<br>' 
-                        if i[6] != '':
-                            failures += str(i[6]) + '<br>'
-                        if i[9] != '':
-                            otherproblems += str(i[9]) + '<br>'
-                        if i[40] != '':
-                            warnings += str(i[40]) + '<br>'
+                        if i[7] != '':
+                            failures += str(i[7]) + '<br>'
+                        if i[10] != '':
+                            otherproblems += str(i[10]) + '<br>'
+                        if i[41] != '':
+                            warnings += str(i[41]) + '<br>'
                 yield "<h2>Problamatic Messages in log:</h2>"
                 if errors != '':
                    yield "".join(make_collapsible_html('action', "Errors found:", "\n%s" % errors, 1))
