@@ -442,9 +442,8 @@ class BuildFarmPage(object):
 class ViewBuildPage(BuildFarmPage):
 
     failurereasons = ''
-    otherreasons = ''
     div_count = 1
-
+    errorlist = ['', '']
     def show_oldrevs(self, myself, build, host, compiler, limit):
         """show the available old revisions, if any"""
 
@@ -474,33 +473,33 @@ class ViewBuildPage(BuildFarmPage):
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
-    def find_errors(self, logsearch, indice):
-        if logsearch is not None:
-             log = ''
-             errorlist = ['', '']
-             for i, line in enumerate(logsearch.splitlines()):
-                 match = re.match("(.*<.?div.*)|((.*error_.*)|(.*exception.*)|(.*failed_.*)|(^pass.*)|(.* pass.*)|(.*success.*)|(.*copyright.*))|((.* error.*)|(^error.*))|((.* fail.*)|(^fail.*))|((.*warning.*)|(^none.*)|(.* skip.*)|(^skip.*)|(.* unknown.*)|(.* no .*)|(.* not .*)|(.*severe.*)|(.* fault.*)|(.* invalid.*)|(.* incorrect.*)|(.*unable .*)|(.*cannot .*)|(.*conflict.*)|(.* corrupt.*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.* terminate.*)|(.*overflow.*)|(.* wrong .*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*unavailable.*)|(.*undefined.*)|(.* unresolved.*)|(.*problem.*))", line, re.M|re.I)
-                 if match:
-                     if match.group(1):
-                         log += line + "\n"
-                     if match.group(2):
-                         log += str(i+1) + ': ' + line + "\n"
-                     if match.group(10):
-                         log += "<br><font color='red'><b>" + str(i+1) + ': ' + line + "</b></font><br>" + "\n"
-                         errorlist[1] += 'Line number ' + str(i+1) + ': ' + line + "\n"
-                     if match.group(13):
-                         log += "<br><font color='red'><b>" + str(i+1) + ': ' + line + "</b></font><br>" + "\n"
-                         errorlist[0] += 'Line number ' + str(i+1) + ': ' + line + "\n"
-                     if match.group(16):
-                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
-                 else:
-                     log += str(i+1) + ': ' + line + "\n"
+    def highlight_errors(self, m):
 
-             if errorlist[0] != '':
-                  self.failurereasons += '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[0] + '<br>'
-             if errorlist[1] != '':
-                  self.failurereasons +=  '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[1] + '<br>' 
-             return log
+        if m.group(10):
+            self.errorlist[0] += m.group() + "<br>"
+            return "<br><font color='red'><b>" + m.group() + "</b></font><br>" + "\n"
+        elif m.group(13):
+            self.errorlist[1] += m.group() + "<br>"
+            return "<br><font color='red'><b>" + m.group() + "</b></font><br>" + "\n"
+        elif m.group(16):
+            return "<font color='blue'><b>" + m.group() + "</b></font>" + "\n"
+        else:
+            return m.group()
+        
+
+    def find_errors(self, log, indice):
+
+        log = re.sub("(.*<.?div.*)|((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$)|(^fail.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.* unknown.*$)|(^.* no .*$)|(^.* not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$)|(^.*problem.*$))", self.highlight_errors, log, 0, re.M|re.I)
+
+        if self.errorlist[1] != '':
+            self.failurereasons += '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + self.errorlist[1] + '<br>'
+            self.errorlist[1] = ''
+
+        if self.errorlist[0] != '':
+            self.failurereasons +=  '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + self.errorlist[0] + '<br>'
+            self.errorlist[0] = ''
+
+        return log
 
     def render(self, myself, build, plain_logs=0, limit=10):
         """view one build in detail"""
