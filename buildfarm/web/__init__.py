@@ -1022,8 +1022,6 @@ class BuildFarmApp(object):
         yield "    <meta name='robots' contents='noindex'/>"
         yield "    <link rel='stylesheet' href='/build_farm.css' type='text/css' media='all'/>"
         yield "    <link rel='stylesheet' href='/newstyles.css' type='text/css' media='all'/>"
-#causing some problem in positioning
-#        yield "    <link rel='stylesheet' href='http://www.samba.org/samba/style/common.css' type='text/css' media='all'/>"
         yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/images/favicon.ico'/>"
         yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
         yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='http://www.samba.org/samba/style/2010/grey/screen.css'/>"
@@ -1045,7 +1043,8 @@ class BuildFarmApp(object):
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_contact_samba_closed.html")
         yield util.FileLoad(os.path.join(webdir, "bannernav2.html"))
         yield "".join(lines)
-        yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_sitemap_samba_closed.html")
+        #for sitmap uncomment after adding a menu_sitemap_samba_closed.html containing the sitemap part of index.html in main samba directory 
+        #yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_sitemap_samba_closed.html")
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "footer.html")
         yield util.FileLoad(os.path.join(webdir, "closingtags.html"))             
 
