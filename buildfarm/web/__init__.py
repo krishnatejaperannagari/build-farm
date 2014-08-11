@@ -186,8 +186,7 @@ class LogPrettyPrinter(object):
     def __init__(self):
         self.indice = 0
         self.failedbuilds = []
-        self.passedbuilds = []
-        self.otherbuilds = []
+        self.otherbuilds = ''
 
     def _pretty_print(self, m):
         output = m.group(1)
@@ -199,41 +198,35 @@ class LogPrettyPrinter(object):
 
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('action', actionName, output, self.indice, status)) + "<br>"
-        match = re.match("((failed)|(error)|(warning)|(mistake))|((passed)|(uxpassed))", m.group(3), re.I)
+        match = re.match("(failed)|(error)|(warning)|(mistake)", m.group(3), re.I)
         if match:
-           if match.group(1):
-               self.failedbuilds.append(collapsiblehtml)
-           elif match.group(6):
-               self.passedbuilds.append(collapsiblehtml)
+            self.failedbuilds.append(collapsiblehtml)
         else:
-            self.otherbuilds.append(collapsiblehtml)
+            self.otherbuilds += collapsiblehtml
         return m.group()
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3))) + "<br>"
-        match = re.match("((failed)|(error)|(warning)|(mistake))|((passed)|(uxpassed))", m.group(3), re.I)
+        match = re.match("(failed)|(error)|(warning)|(mistake)", m.group(3), re.I)
         if match:
-           if match.group(1):
-               self.failedbuilds.append(collapsiblehtml)
-           elif match.group(6):
-               self.passedbuilds.append(collapsiblehtml)
+            self.failedbuilds.append(collapsiblehtml)
         else:
-            self.otherbuilds.append(collapsiblehtml)
+            self.otherbuilds += collapsiblehtml
         return m.group()
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped')) + "<br>"
-        self.otherbuilds.append(collapsiblehtml)
+        self.otherbuilds += collapsiblehtml
         return m.group()
 
     def _format_pretestsuite(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + "\n" + m.group(2) + "\n" + m.group(3) , self.indice, 'ok'))+ "<br>"
         #since status is ok
-        self.passedbuilds.append(collapsiblehtml)
+        self.otherbuilds += collapsiblehtml
         return m.group()
 
     def _format_testsuite(self, m):
@@ -250,27 +243,21 @@ class LogPrettyPrinter(object):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
         collapsiblehtml = "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)) + "<br>"
-        match = re.match("((failed)|(error)|(warning)|(mistake))|((passed)|(uxpassed))", status, re.I)
+        match = re.match("(failed)|(error)|(warning)|(mistake)", status, re.I)
         if match:
-           if match.group(1):
-               self.failedbuilds.append(collapsiblehtml)
-           elif match.group(6):
-               self.passedbuilds.append(collapsiblehtml)
+            self.failedbuilds.append(collapsiblehtml)
         else:
-            self.otherbuilds.append(collapsiblehtml)
+            self.otherbuilds += collapsiblehtml
         return m.group()
 
     def _format_test(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3)))) + "<br>"
-        match = re.match("((failed)|(error)|(warning)|(mistake))|((passed)|(uxpassed))", subunit_to_buildfarm_result(m.group(3)), re.I)
+        match = re.match("(failed)|(error)|(warning)|(mistake)", subunit_to_buildfarm_result(m.group(3)), re.I)
         if match:
-           if match.group(1):
-               self.failedbuilds.append(collapsiblehtml)
-           elif match.group(6):
-               self.passedbuilds.append(collapsiblehtml)
+            self.failedbuilds.append(collapsiblehtml)
         else:
-            self.otherbuilds.append(collapsiblehtml)
+            self.otherbuilds += collapsiblehtml
         return m.group()
 
     def pretty_print(self, log):
@@ -311,11 +298,8 @@ class LogPrettyPrinter(object):
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, "")) + "\n"
             for i in range(len(self.failedbuilds)):
                 self.failedbuilds[i] = re.sub("Running action\s+test", divhtml, self.failedbuilds[i])
-            for i in range(len(self.passedbuilds)):
-                self.passedbuilds[i] = re.sub("Running action\s+test", divhtml, self.passedbuilds[i])
-            for i in range(len(self.otherbuilds)):
-                self.otherbuilds[i] = re.sub("Running action\s+test", divhtml, self.otherbuilds[i])
-        log = [self.failedbuilds, self.passedbuilds, self.otherbuilds, self.indice]
+            self.otherbuilds = re.sub("Running action\s+test", divhtml, self.otherbuilds)
+        log = [self.failedbuilds, self.otherbuilds, self.indice]
         return log
 
 
@@ -490,7 +474,7 @@ class ViewBuildPage(BuildFarmPage):
 
         yield "<p><a href='%s/limit/-1'>Show all previous build list</a>\n" % (build_uri(myself, build))
 
-    def display_failed_log(self, logsearch, indice):
+    def find_errors(self, logsearch, indice):
         if logsearch is not None:
              log = ''
              errorlist = ['', '']
@@ -613,32 +597,18 @@ class ViewBuildPage(BuildFarmPage):
             if log is not None:
                 log = print_log_pretty(log)
                 failedbuilds = log[0]
-                passedbuilds = log[1]
-                otherbuilds = log[2]
-                indice = log[3]
+                otherbuilds = log[1]
+                indice = log[2]
                 indice += 1
-
                 failedcollapsiblehtml = ''
-                passedcollapsiblehtml = ''
 
                 for i in failedbuilds:
-                    failedcollapsiblehtml += self.display_failed_log(i, indice)
-                    indice += 2
+                    failedcollapsiblehtml += self.find_errors(i, indice)
                     self.div_count += 1
-                for i in otherbuilds:
-                    if failedcollapsiblehtml == '':
-                        failedcollapsiblehtml += self.display_failed_log(i, indice)
-                        indice += 2
-                        self.div_count += 1
-                    else:
-                        passedcollapsiblehtml += i
-                for i in passedbuilds:
-                    passedcollapsiblehtml += i
 
-            if self.failurereasons != "" or self.otherreasons != "":
+            if self.failurereasons != "":
                     yield "<h2>Problamatic messages:</h2>"
-                    if self.failurereasons != "":
-                        yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % self.failurereasons , indice + 1, "errorlog"))
+                    yield "".join(make_collapsible_html('action', "Failure Reasons", "\n%s" % self.failurereasons , indice + 1, "errorlog"))
 
             if failedcollapsiblehtml != '':
                     yield "<h2>Failed part:</h2>"
@@ -650,11 +620,11 @@ class ViewBuildPage(BuildFarmPage):
                 yield "<h2>Error log:</h2>"
                 yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
 
-            if passedcollapsiblehtml == '':
+            if otherbuilds == '':
                 yield "<h2>No build log available</h2>"
             else:
                    yield "<h2>Build log:</h2>\n"
-                   yield passedcollapsiblehtml
+                   yield otherbuilds
 
             yield "<p><small>Some of the above icons derived from the <a href='https://www.gnome.org'>Gnome Project</a>'s stock icons.</small></p>"
             yield "</div>"
