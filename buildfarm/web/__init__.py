@@ -190,7 +190,6 @@ class LogPrettyPrinter(object):
 
     def __init__(self):
         self.indice = 0
-        self.collapsiblehtml = ''
 
     def _pretty_print(self, m):
         output = m.group(1)
@@ -201,24 +200,20 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
-        self.collapsiblehtml += "".join(make_collapsible_html('action', actionName, output, self.indice, status))
-        return m.group()
+        return "".join(make_collapsible_html('action', actionName, output, self.indice, status))
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
-        self.collapsiblehtml += "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
-        return m.group()
+        return "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
-        self.collapsiblehtml += "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
-        return m.group()
+        return "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
 
     def _format_pretestsuite(self, m):
         self.indice += 1
-        self.collapsiblehtml += "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + m.group(2) + m.group(3), self.indice, 'ok'))
-        return m.group()
+        return "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + m.group(2) + m.group(3), self.indice, 'ok'))
 
     def _format_testsuite(self, m):
         testName = m.group(1)
@@ -233,13 +228,11 @@ class LogPrettyPrinter(object):
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
-        self.collapsiblehtml += "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
-        return m.group()
+        return "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
 
     def _format_test(self, m):
         self.indice += 1
-        self.collapsiblehtml += "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
-        return m.group()
+        return "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
@@ -277,8 +270,9 @@ class LogPrettyPrinter(object):
 
         if not buf == "":
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
-            self.collapsiblehtml = re.sub("Running action\s+test", divhtml, self.collapsiblehtml)
-        return self.collapsiblehtml
+            log = re.sub("Running action\s+test", divhtml, log)
+        log = re.sub("<pre></pre>", "", log)
+        return "<pre>%s</pre>" % log
 
 
 def print_log_pretty(log):
@@ -358,6 +352,8 @@ def make_collapsible_html(type, title, output, id, status=""):
 
     # note that we may be inside a <pre>, so we don't put any extra whitespace
     # in this html
+    yield "</pre>"
+    yield "<br>"
     yield "<div class='%s unit %s' id='%s-%s'>" % (type, status, type, id)
     yield "<a name='lnk-%s-%s' href=\"javascript:handle('%s');\">" % (type, id, id)
     yield "<img id='img-%s' name='img-%s' alt='%s' src='%s' />" % (id, id, status, icon)
@@ -369,6 +365,7 @@ def make_collapsible_html(type, title, output, id, status=""):
         yield "<pre>%s \n </pre>" % (output,)
     yield "</div></div>"
     yield "<br>"
+    yield "<pre>"
 
 
 def web_paths(t, paths):
