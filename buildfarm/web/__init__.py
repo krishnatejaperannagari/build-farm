@@ -493,29 +493,34 @@ class ViewBuildPage(BuildFarmPage):
     def display_failed_log(self, logsearch, indice):
         if logsearch is not None:
              log = ''
-             errorlist = ['', '']
+             errorlist = ['', '', '']
              for i, line in enumerate(logsearch.splitlines()):
-                 match = re.match("(.*<.?div.*)|((.*error_.*)|(.*exception.*)|(.*failed_.*))|((.* fail.*)|(^fail.*)|(.* error.*)|(^error.*))|((^pass.*)|(.* pass.*)|(.*success.*)|(.*copyright.*))|((.*warning.*)|(^none.*)|(.* skip.*)|(^skip.*)|(.* unknown.*)|(.* no .*)|(^no .*)|(.* not .*)|(^not .*))|((.*severe.*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.* unable .*)|(^unable .*)|(.*cannot .*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.* terminate.*)|(.*overflow.*)|(.* wrong .*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*unavailable.*)|(.*undefined.*)|(.* unresolved.*))", line, re.M|re.I)
+                 match = re.match("(.*<.?div.*)|((.*error_.*)|(.*exception.*)|(.*failed_.*))|((.* fail.*)|(^fail.*))|((.* error.*)|(^error.*))|((^pass.*)|(.* pass.*)|(.*success.*)|(.*copyright.*))|((.*warning.*)|(^none.*)|(.* skip.*)|(^skip.*)|(.* unknown.*)|(.* no .*)|(^no .*)|(.* not .*)|(^not .*))|((.*severe.*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.* unable .*)|(^unable .*)|(.*cannot .*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.* terminate.*)|(.*overflow.*)|(.* wrong .*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*unavailable.*)|(.*undefined.*)|(.* unresolved.*))", line, re.M|re.I)
                  if match:
                      if match.group(1):
                          log += line + "\n"
                      if match.group(6):
                          log += "<br><font color='red'><b>" + str(i+1) + ': ' + line + "</b></font><br>" + "\n"
                          errorlist[0] += 'Line number ' + str(i+1) + ': ' + line + "\n"
-                     if match.group(11):
-                         log += str(i+1) + ': ' + line + "\n"
-                     if match.group(16) or match.group(2):
-                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
-                     if match.group(26):
-                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
+                     if match.group(9):
+                         log += "<br><font color='red'><b>" + str(i+1) + ': ' + line + "</b></font><br>" + "\n"
                          errorlist[1] += 'Line number ' + str(i+1) + ': ' + line + "\n"
+                     if match.group(12):
+                         log += str(i+1) + ': ' + line + "\n"
+                     if match.group(17) or match.group(2):
+                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
+                     if match.group(27):
+                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
+                         errorlist[2] += 'Line number ' + str(i+1) + ': ' + line + "\n"
                  else:
                      log += str(i+1) + ': ' + line + "\n"
 
              if errorlist[0] != '':
-                  self.failurereasons +=  '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[0] + '<br>' 
+                  self.failurereasons += '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[0] + '<br>'
              if errorlist[1] != '':
-                  self.otherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[1] + '<br>'
+                  self.failurereasons +=  '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[1] + '<br>' 
+             if errorlist[2] != '':
+                  self.otherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[2] + '<br>'
              return log
 
     def render(self, myself, build, plain_logs=0, limit=10):
