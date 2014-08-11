@@ -493,38 +493,29 @@ class ViewBuildPage(BuildFarmPage):
     def display_failed_log(self, logsearch, indice):
         if logsearch is not None:
              log = ''
-             errorlist = ['', '', '']
-             i = 0
-             for line in logsearch.splitlines():
-                 match = re.match("(.*<.?div.*)|((.*passed.*)|(.*success.*))|((.* error .*)|(.* error)|(error .*))|((.* fail.*)|(fail.*))|((.*error.*)|(.*fail)|(.*no .*)|(.*not .*)|(.*unknown .*)|(.* unknown.*)|(.*low .*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.*unable .*)|(.*cannot .*)|(.*conflict .*)|(.* conflict.*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.*terminate.*)|(.*overflow.*)|(.*wrong .*)|(.* wrong.*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*problem.*)|(.*exception.*))", line, re.M|re.I)
-                 if line != '':
-                     i += 1
-                     if match:
-                          if match.group(1):
-                              log += line + "\n"
-                          if match.group(2):
-                              log += str(i) + ': ' + line + "\n"
-                          if match.group(5):
-                              log += "<br><font color='red'><b>" + str(i) + ': ' + line + "</b></font><br>" + "\n"
-                              errorlist[0] += 'Line number ' + str(i) + ': ' + line + "\n"
-                          if match.group(9):
-                              log += "<br><font color='red'><b>" + str(i) + ': ' + line + "</b></font><br>" + "\n"
-                              errorlist[1] += 'Line number ' + str(i) + ': ' + line + "\n"
-                          if match.group(12):
-                              log += "<font color='blue'><b>" + str(i) + ': ' + line + "</b></font>" + "\n"
-                              errorlist[2] += 'Line number ' + str(i) + ': ' + line + "\n"
-                     else:
-                          log += str(i) + ': ' + line + "\n"
+             errorlist = ['', '']
+             for i, line in enumerate(logsearch.splitlines()):
+                 match = re.match("(.*<.?div.*)|((.*error_.*)|(.*exception.*)|(.*failed_.*))|((.* fail.*)|(^fail.*)|(.* error.*)|(^error.*))|((^pass.*)|(.* pass.*)|(.*success.*)|(.*copyright.*))|((.*warning.*)|(^none.*)|(.* skip.*)|(^skip.*)|(.* unknown.*)|(.* no .*)|(^no .*)|(.* not .*)|(^not .*))|((.*severe.*)|(.* fault.*)|(.*invalid .*)|(.* invalid.*)|(.* incorrect.*)|(.*incorrect .*)|(.* unable .*)|(^unable .*)|(.*cannot .*)|(.* corrupt.*)|(.*missing .*)|(.* missing.*)|(.*abort.*)|(.*denied.*)|(.* terminate.*)|(.*overflow.*)|(.* wrong .*)|(.*forbidden.*)|(.*disabled.*)|(.*disconnect.*)|(.*unavailable.*)|(.*undefined.*)|(.* unresolved.*))", line, re.M|re.I)
+                 if match:
+                     if match.group(1):
+                         log += line + "\n"
+                     if match.group(6):
+                         log += "<br><font color='red'><b>" + str(i+1) + ': ' + line + "</b></font><br>" + "\n"
+                         errorlist[0] += 'Line number ' + str(i+1) + ': ' + line + "\n"
+                     if match.group(11):
+                         log += str(i+1) + ': ' + line + "\n"
+                     if match.group(16) or match.group(2):
+                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
+                     if match.group(26):
+                         log += "<font color='blue'><b>" + str(i+1) + ': ' + line + "</b></font>" + "\n"
+                         errorlist[1] += 'Line number ' + str(i+1) + ': ' + line + "\n"
+                 else:
+                     log += str(i+1) + ': ' + line + "\n"
 
-             if errorlist[0] != '' and errorlist[1] != '':
-                  self.failurereasons += '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[0] + '\n' + '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[1] + '<br>'
-             elif errorlist[0] != '':
-                  self.failurereasons += '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[0] + '<br>'
-             elif errorlist[1] != '':
-                  self.failurereasons +=  '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[1] + '<br>'
-             
-             if errorlist[2] != '':
-                  self.otherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[2] + '<br>'
+             if errorlist[0] != '':
+                  self.failurereasons +=  '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[0] + '<br>' 
+             if errorlist[1] != '':
+                  self.otherreasons += '<font color="red"><b>Other Problems in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + errorlist[1] + '<br>'
              return log
 
     def render(self, myself, build, plain_logs=0, limit=10):
@@ -698,22 +689,22 @@ class ViewBuildPage(BuildFarmPage):
                   " unstyled view'>Plain View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
 
             if log is not None:
-                errorlist = ['', '', '', '']
-                match = re.findall("((^.*passed.*$)|(^.*success.*$))|((^.* error .*$)|(^.* error$)|(^error .*$))|((^.* fail.*$))|(^fail.*$)|((^.*error.*)|(^.*fail$)|(^.*no .*$)|(^.*not .*$)|(^.*unknown .*$)|(^.* unknown.*$)|(^.*low .*$)|(^.* fault.*$)|(^.*invalid.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*incorrect .*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict .*$)|(^.* conflict.*$)|(^.* corrupt.*$)|(^.*missing .*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.*terminate.*$)|(^.*overflow.*$)|(^.*wrong .*$)|(^.* wrong.*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*problem.*$)|(^.*exception.*$))", log, re.M|re.I)
+                errorlist = ['', '', '']
+                match = re.findall("((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$))|((^.* fail.*$)|(^fail.*$))|((^.* error.*$)|(^error.*$))|((^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$)|(^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.*unknown .*$)|(^.* no .*$)|(^no .*$)|(^.* not .*$)|(^not .*$))|((^.*severe.*$)|(^.* fault.*$)|(^.*invalid .*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*incorrect .*$)|(^.* unable .*$)|(^unable .*$)|(^.*cannot .*$)|(^.* corrupt.*$)|(^.*missing .*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$))", log, re.M|re.I)
                 if match:
                     for i in match:
-                        if i[3] != '':
-                            errorlist[0] += str(i[3]) + '<br>' 
+                        if i[4] != '':
+                            errorlist[0] += str(i[4]) + '<br>' 
                         if i[7] != '':
                             errorlist[1] += str(i[7]) + '<br>'
-                        if i[10] != '':
-                            errorlist[2] += str(i[10]) + '<br>'
+                        if i[24] != '':
+                            errorlist[2] += str(i[24]) + '<br>'
                 yield "<h2>Problamatic Messages in log:</h2>"
                 if errorlist[0] != '':
-                   yield "".join(make_collapsible_html('action', "Errors found:", "\n%s" % errorlist[0], 1))
+                   yield "".join(make_collapsible_html('action', "Failures found:", "\n%s" % errorlist[0], 1))
                    yield "<br>"                   
                 if errorlist[1] != '':
-                   yield "".join(make_collapsible_html('action', "Failures found:", "\n%s" % errorlist[1], 2))
+                   yield "".join(make_collapsible_html('action', "Errors found:", "\n%s" % errorlist[1], 2))
                    yield "<br>"
                 if errorlist[2] != '':
                    yield "".join(make_collapsible_html('action', "Other messages:", "\n%s" % errorlist[2], 3))
