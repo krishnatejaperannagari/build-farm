@@ -1040,10 +1040,12 @@ class BuildFarmApp(object):
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_contact_samba_closed.html")
         yield util.FileLoad(os.path.join(webdir, "bannernav2.html"))
         yield "".join(lines)
-        #for sitmap uncomment after adding a menu_sitemap_samba_closed.html containing the sitemap part of index.html in main samba directory 
+        #for sitmap uncomment after adding a menu_sitemap_samba_closed.html containing the sitemap part of index.html in main samba directory
+        #yield "<div class='noPrint' id='newsitemap'>"
         #yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_sitemap_samba_closed.html")
+        #yield "</div>"
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "footer.html")
-        yield util.FileLoad(os.path.join(webdir, "closingtags.html"))             
+        yield util.FileLoad(os.path.join(webdir, "closingtags.html")) 
 
     def __call__(self, environ, start_response):
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
