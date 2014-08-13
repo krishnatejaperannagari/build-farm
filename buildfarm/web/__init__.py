@@ -463,10 +463,6 @@ class BuildFarmPage(object):
 
 class ViewBuildPage(BuildFarmPage):
 
-    div_count = 1
-    errorlist = ['', '']
-    failurelist = ['', '']
-
     def show_oldrevs(self, myself, build, host, compiler, limit):
         """show the available old revisions, if any"""
 
@@ -509,9 +505,9 @@ class ViewBuildPage(BuildFarmPage):
         else:
             return m.group()
 
-    def find_errors(self, log, indice):
+    def find_errors(self, highlightedlog, indice):
 
-        log = re.sub("(.*<.?div.*)|((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$)|(^fail.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.* unknown.*$)|(^.* no .*$)|(^.* not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$)|(^.*problem.*$))", self.highlight_errors, log, 0, re.M|re.I)
+        highlightedlog = re.sub("(.*<.?div.*)|((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$)|(^fail.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.* unknown.*$)|(^.* no .*$)|(^.* not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$)|(^.*problem.*$))", self.highlight_errors, highlightedlog, 0, re.M|re.I)
 
         if self.failurelist[1] != '':
             self.failurelist[0] += '<font color="red"><b>Failures in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + self.failurelist[1] + '<br>'
@@ -521,11 +517,14 @@ class ViewBuildPage(BuildFarmPage):
             self.errorlist[0] +=  '<font color="red"><b>Errors in '+ str(self.div_count) + ' collapsible part:</b></font> \n' + self.errorlist[1] + '<br>'
             self.errorlist[1] = ''
 
-        return log
+        return highlightedlog
 
     def render(self, myself, build, plain_logs=False, limit=10):
         """view one build in detail"""
 
+        self.div_count = 1
+        self.errorlist = ['', '']
+        self.failurelist = ['', '']
         uname = None
         cflags = None
         config = None
@@ -613,10 +612,10 @@ class ViewBuildPage(BuildFarmPage):
             # allow them to wrap in some way?
 
             if log is not None:
-                log = print_log_pretty(log)
-                failedbuilds = log[0]
-                otherbuilds = log[1]
-                indice = log[2]
+                collapsiblelog = print_log_pretty(log)
+                failedbuilds = collapsiblelog[0]
+                otherbuilds = collapsiblelog[1]
+                indice = collapsiblelog[2]
                 indice += 1
                 failedcollapsiblehtml = ''
 
@@ -1059,14 +1058,13 @@ class FailedBuildsPage(BuildFarmPage):
 
         index = 0
         for build in builds[:100]:
-            status = build.status()
             show = False
-            for s in status.stages:
+            for s in build.status().stages:
                 if s.result != 0:
                     show = True
                     break
-            if (show == True or "panic" in status.other_failures or "disk full" in status.other_failures or 
-               "timeout" in status.other_failures or "inconsistent test result" in status.other_failures):
+            if (show == True or "panic" in build.status().other_failures or "disk full" in build.status().other_failures or 
+               "timeout" in build.status().other_failures or "inconsistent test result" in build.status().other_failures):
                 index = index + 1
                 try:
                     build_platform_name = build_platform(build)
