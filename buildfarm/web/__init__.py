@@ -291,7 +291,7 @@ class LogPrettyPrinter(object):
                      ==========================================.*?
                      TEST\ (FAILED|PASSED|SKIPPED):.*?
                      ==========================================\s+
-                  """) 
+                  """)
         self.organise_results(pattern, self._format_stage)
 
         pattern = re.compile("(Running action test).*$\s((?:^.*$\s)*?)^((?:skip-)?testsuite: )", re.M)
@@ -508,7 +508,6 @@ class ViewBuildPage(BuildFarmPage):
             return "<font color='blue'><b>" + m.group() + "</b></font>"
         else:
             return m.group()
-        
 
     def find_errors(self, log, indice):
 
@@ -524,7 +523,7 @@ class ViewBuildPage(BuildFarmPage):
 
         return log
 
-    def render(self, myself, build, plain_logs=0, limit=10):
+    def render(self, myself, build, plain_logs=False, limit=10):
         """view one build in detail"""
 
         uname = None
@@ -604,13 +603,10 @@ class ViewBuildPage(BuildFarmPage):
         yield "<a href='%s/+stderr'>Standard error (as plain text)</a>" % build_uri(myself, build)
         yield "</p>"
 
-        if plain_logs == 0:
+        if not plain_logs:
             yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s"\
-                  ";compiler=%s%s;plain=1' title='Switch to bland, non-javascript,"\
+                  ";compiler=%s%s;plain=true' title='Switch to bland, non-javascript,"\
                   " unstyled view'>Plain View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
-            yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s"\
-                  ";compiler=%s%s;plain=2' title='Lists all problamatic messages'"\
-                  ">Error View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
 
             yield "<div id='actionList'>"
             # These can be pretty wide -- perhaps we need to
@@ -639,7 +635,7 @@ class ViewBuildPage(BuildFarmPage):
             if failedcollapsiblehtml != '':
                     yield "<h2>Failed part:</h2>"
                     yield failedcollapsiblehtml
-                
+
             if err == "":
                 yield "<h2>No error log available</h2>\n"
             else:
@@ -655,13 +651,10 @@ class ViewBuildPage(BuildFarmPage):
             yield "<p><small>Some of the above icons derived from the <a href='https://www.gnome.org'>Gnome Project</a>'s stock icons.</small></p>"
             yield "</div>"
 
-        elif plain_logs == 1:
+        else:
             yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s;"\
                   "compiler=%s%s' title='Switch to colourful, javascript-enabled, styled"\
                   " view'>Enhanced View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
-            yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s"\
-                  ";compiler=%s%s;plain=2' title='Lists all problamatic messages'"\
-                  ">Error View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
             if err == "":
                 yield "<h2>No error log available</h2>"
             else:
@@ -673,35 +666,6 @@ class ViewBuildPage(BuildFarmPage):
                 yield '<h2>Build log:</h2>\n'
                 yield '<div id="buildLog"><pre>%s</pre></div>' % log
 
-        elif plain_logs == 2:
-            yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s;"\
-                  "compiler=%s%s' title='Switch to colourful, javascript-enabled, styled"\
-                  " view'>Enhanced View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
-            yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s"\
-                  ";compiler=%s%s;plain=1' title='Switch to bland, non-javascript,"\
-                  " unstyled view'>Plain View</a></p>" % (myself, build.host, build.tree, build.compiler, rev_var)
-
-            if log is not None:
-                errorlist = ['', '', '']
-                match = re.findall("((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* fail.*$)|(^fail.*$))|((^.* error.*$)|(^error.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.*unknown .*$)|(^.* no .*$)|(^no .*$)|(^.* not .*$)|(^not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.*invalid .*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*incorrect .*$)|(^.* unable .*$)|(^unable .*$)|(^.*cannot .*$)|(^.* corrupt.*$)|(^.*missing .*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$))", log, re.M|re.I)
-                if match:
-                    for i in match:
-                        if i[8] != '':
-                            errorlist[0] += str(i[8]) + '<br>' 
-                        if i[11] != '':
-                            errorlist[1] += str(i[11]) + '<br>'
-                        if i[14] != '':
-                            errorlist[2] += str(i[14]) + '<br>'
-                yield "<h2>Problamatic Messages in log:</h2>"
-                if errorlist[0] != '':
-                   yield "".join(make_collapsible_html('action', "Failures found:", "\n%s" % errorlist[0], 1))
-                   yield "<br>"                   
-                if errorlist[1] != '':
-                   yield "".join(make_collapsible_html('action', "Errors found:", "\n%s" % errorlist[1], 2))
-                   yield "<br>"
-                if errorlist[2] != '':
-                   yield "".join(make_collapsible_html('action', "Other messages:", "\n%s" % errorlist[2], 3))
-                   yield "<br>"
         yield '</div>'
 
 
@@ -1121,8 +1085,8 @@ class FailedBuildsPage(BuildFarmPage):
                     break
         yield "</tbody></table>"
         yield "</div>"
- 
-         
+
+
 class BuildFarmApp(object):
 
     def __init__(self, buildfarm):
@@ -1206,7 +1170,7 @@ class BuildFarmApp(object):
             compiler = get_param(form, "compiler")
 
             if fn_name == "View_Build":
-                plain_logs = int(get_param(form, "plain"))
+                plain_logs = (get_param(form, "plain") is not None and get_param(form, "plain").lower() in ("yes", "1", "on", "true", "y"))
                 revision = get_param(form, "revision")
                 checksum = get_param(form, "checksum")
                 try:
@@ -1217,7 +1181,7 @@ class BuildFarmApp(object):
                         tree, host, compiler, revision, checksum)
                 else:
                     page = ViewBuildPage(self.buildfarm)
-                    plain_logs = int(get_param(form, "plain"))
+                    plain_logs = (get_param(form, "plain") is not None and get_param(form, "plain").lower() in ("yes", "1", "on", "true", "y"))
                     yield "".join(self.html_page(form, page.render(myself, build, plain_logs)))
             elif fn_name == "View_Host":
                 page = ViewHostPage(self.buildfarm)
@@ -1287,7 +1251,7 @@ class BuildFarmApp(object):
                     try:
                         yield build.read_subunit().read()
                     except NoTestOutput:
-                        yield "There was no test output" 
+                        yield "There was no test output"
                 elif subfn == "+stdout":
                     start_response('200 OK', [
                         ('Content-type', 'text/plain; charset=utf-8'),
