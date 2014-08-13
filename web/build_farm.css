@@ -65,37 +65,37 @@ a + div.action.status {margin-left: 0.5em;}
 }
 
 /* generically, status correspond to the ok/ok/ok/ok strings */
-.status.passed { 
+.status.passed {
         color: rgb(0, 128, 0);
 }
 
-.status.failed { 
+.status.failed {
         color: rgb(255, 0, 0);
 }
 
-.status.panic { 
+.status.panic {
         color: rgb(255, 0, 0);
         font-weight: bold;
 }
-.status.checker { 
+.status.checker {
         color: rgb(255, 127, 0);
 }
-.status.unknown { 
+.status.unknown {
         color: rgb(0, 0, 255);
 }
 
-.summary td.status { 
+.summary td.status {
         text-align: center;
 }
 
-.summary .tree { 
+.summary .tree {
         font-weight: bold;
 }
 
-.summary .age { 
+.summary .age {
         text-align: right;
 }
-.age .old { 
+.age .old {
         color: rgb(210, 0, 0);
 }
 .preformated {
@@ -106,17 +106,17 @@ a + div.action.status {margin-left: 0.5em;}
 div.host.summary {
         float: left;
 }
-div.host.summary h3 { 
+div.host.summary h3 {
         margin-bottom: 2px;
 }
-div.summary { 
+div.summary {
         margin: 4px;
 }
-div.build-section { 
+div.build-section {
         clear: both;
         width: 100%;
 }
-#logo>.build_logo { 
+#logo>.build_logo {
         background-image:url(build_logo.png);
         background-position:center;
         background-repeat:no-repeat;
@@ -127,7 +127,7 @@ div.build-section {
         height:208px;
         margin-top:-42px;
         margin-left:1px;
-        z-index:1;      
+        z-index:1;
 }
 
 #banner {
@@ -152,14 +152,14 @@ div.build-section {
 	border-bottom:2px solid #575756;
 }
 
-#build-menu { 
+#build-menu {
         position: absolute;
         top: 0;
         left: 250px;
         margin-top: 5px;
         z-index: 10;
 }
-#build-menu input { 
+#build-menu input {
         margin: 20px 10px 0px 0px;
 }
 
@@ -170,7 +170,7 @@ div.build-section {
 	left:175px;
 	margin:0;
 }
-.center { 
+.center {
         margin:100px 10px 0 175px;
 	padding-top:30px;
 	padding-left:35px;
@@ -209,7 +209,7 @@ div.build-section {
         color: green;
 }
 
-.history_row { 
+.history_row {
         margin-bottom: 30px;
         padding: 2px;
         line-height: 160%;

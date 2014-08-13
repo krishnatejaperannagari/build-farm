@@ -50,7 +50,7 @@ def SambaWebFileLoad(webdir, filename):
         text = f.read()
     finally:
         f.close()
-    def add_virtual_headers(m): 
+    def add_virtual_headers(m):
         f = open(os.path.join(webdir, m.group(1)), 'r')
         try:
             text = f.read()

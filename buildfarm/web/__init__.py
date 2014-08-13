@@ -932,7 +932,7 @@ class RecentCheckinsPage(HistoryPage):
         authors = {"ALL": "ALL"}
         branch = t.get_branch()
         re_author = re.compile("^(.*) <(.*)>$")
- 
+
         for entry in branch.log(limit=HISTORY_HORIZON):
             m = re_author.match(entry.author)
             authors[m.group(2)] = m.group(1)
@@ -1000,7 +1000,7 @@ class BuildFarmApp(object):
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
         yield "<br/><br/>"
         functions_dict = {
-            'View Build': 'View Build', 'Summary': 'Summary', 'View Host': 'View Host', 
+            'View Build': 'View Build', 'Summary': 'Summary', 'View Host': 'View Host',
             'Recent Builds': 'Recent Builds', 'Recent Checkins': 'Recent Checkins',
             }
         yield "".join(select("function", functions_dict, default=function))
@@ -1045,7 +1045,7 @@ class BuildFarmApp(object):
         #yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_sitemap_samba_closed.html")
         #yield "</div>"
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "footer.html")
-        yield util.FileLoad(os.path.join(webdir, "closingtags.html")) 
+        yield util.FileLoad(os.path.join(webdir, "closingtags.html"))
 
     def __call__(self, environ, start_response):
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ)
