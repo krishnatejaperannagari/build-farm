@@ -342,10 +342,8 @@ def make_collapsible_html(type, title, output, id, status=""):
     :param type: the logical type of it. e.g. "test" or "action"
     :param title: the title to be displayed
     """
-    if status.lower() in ("", "failed"):
-        icon = '/icon_hide_16.png'
-    else:
-        icon = '/icon_unhide_16.png'
+    # as none are displayed in block
+    icon = '/icon_unhide_16.png'
 
     # trim leading and trailing whitespace
     output = output.strip()
@@ -358,7 +356,7 @@ def make_collapsible_html(type, title, output, id, status=""):
     yield "<a name='lnk-%s-%s' href=\"javascript:handle('%s');\">" % (type, id, id)
     yield "<img id='img-%s' name='img-%s' alt='%s' src='%s' />" % (id, id, status, icon)
     yield "<div class='%s title'>%s</div></a>" % (type, title)
-    yield "<div class='%s status %s'>%s</div>" % (type, status, status)
+    yield "<div class='%s status %s' style='position:absolute;right:25px'>%s</div>" % (type, status, status)
     yield "<div class='%s output' id='output-%s'>" % (type, id)
     yield "<br>"
     if output:
@@ -951,7 +949,7 @@ class RecentCheckinsPage(HistoryPage):
         yield "<input type='hidden' name='function', value='Recent Checkins'/>"
         yield "</div>\n"
         yield "</form>"
-        yield "<br>"
+        yield "<br><br>"
 
         gitstop = gitstart + self.limit
 
@@ -1018,10 +1016,10 @@ class BuildFarmApp(object):
         yield "    <meta name='description' contents='Home of the Samba Build Farm, the automated testing facility.'/>\n"
         yield "    <meta name='robots' contents='noindex'/>"
         yield "    <link rel='stylesheet' href='/build_farm.css' type='text/css' media='all'/>"
-        yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/images/favicon.ico'/>"
-        yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
-        yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='http://www.samba.org/samba/style/2010/grey/screen.css'/>"
-        yield "    <link rel='stylesheet' type='text/css' media='print' href='http://www.samba.org/samba/style/2010/grey/print.css'/> "
+        yield "    <link rel='shortcut icon' href='https://www.samba.org/samba/images/favicon.ico'/>"
+        yield "    <link rel='shortcut icon' href='https://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
+        yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='https://www.samba.org/samba/style/2010/grey/screen.css'/>"
+        yield "    <link rel='stylesheet' type='text/css' media='print' href='https://www.samba.org/samba/style/2010/grey/print.css'/> "
         yield "  </head>"
         yield "<body>"
 

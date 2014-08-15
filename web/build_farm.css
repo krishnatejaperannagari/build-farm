@@ -48,8 +48,21 @@
 #log .unit.errorlog .output {	display: none;}
 #log .unit.pretest  .output {	display: none;}
 #log div.status.errorlog {	display: none;}
-img + div.action.title {margin-left: 0.5em;}
-a + div.action.status {margin-left: 0.5em;}
+img + div.testlinks.title,
+img + div.cc_checker.title,
+img + div.pretest.title,
+img + div.test.title,
+img + div.action.title {
+	margin-left: 0.5em;
+}
+a + div.testlinks.status,
+a + div.cc_checker.status,
+a + div.pretest.status,
+a + div.test.status,
+a + div.action.status {
+	margin-left: 0.5em;
+}
+
 
 #log div.output-stderr-0 {
 	display: none;
@@ -315,7 +328,7 @@ pre::-webkit-scrollbar-thumb
 /*removes width applicable for entire page*/
 #page,
 #newpagestart {
-	background-image: url(http://www.samba.org/samba/style/2010/grey/bg.jpg);
+	background-image: url(https://www.samba.org/samba/style/2010/grey/bg.jpg);
 	background-position: 0 0;
 	background-repeat: no-repeat;
 }
@@ -350,13 +363,13 @@ pre::-webkit-scrollbar-thumb
 
 /*new banner*/
 #hd #newbannerstart {
+	background-image: url("https://www.samba.org/samba/style/2010/grey/bgHeader.png");
+	background-size: 100% 139px;
+	background-position: 0px 0px;
 	float: right;
 	height: 139px;
 	width: 100%;
-	background-image: url(newheader.png);
-	background-position: 0px 0px;
 	background-repeat: no-repeat;
-
 }
 
 /*form*/
@@ -419,7 +432,7 @@ pre::-webkit-scrollbar-thumb
 	top: 540px;
 	left: 2px;
 	width: 140px;
-	background-image: url("samba-web/style/2010/grey/bgBoxSpecial.gif");
+	background-image: url("https://www.samba.org/samba/style/2010/grey/bgBoxSpecial.gif");
         background-size: 140px auto;
 }
 
@@ -439,6 +452,6 @@ pre::-webkit-scrollbar-thumb
 	position: absolute;
 	width: 140px;
 	height: 16px;
-        background-image: url("samba-web/style/2010/grey/bgBoxSpecialBottom.gif");
+        background-image: url("https://www.samba.org/samba/style/2010/grey/bgBoxSpecialBottom.gif");
         background-size: 140px 16px;
 }
