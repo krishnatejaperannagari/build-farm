@@ -419,7 +419,7 @@ pre::-webkit-scrollbar-thumb
 	top: 540px;
 	left: 2px;
 	width: 140px;
-	background-image: url("samba-web/style/2010/grey/bgBoxSpecial.gif");
+	background-image: url("http://www.samba.org/samba/style/2010/grey/bgBoxSpecial.gif");
         background-size: 140px auto;
 }
 
@@ -439,6 +439,6 @@ pre::-webkit-scrollbar-thumb
 	position: absolute;
 	width: 140px;
 	height: 16px;
-        background-image: url("samba-web/style/2010/grey/bgBoxSpecialBottom.gif");
+        background-image: url("http://www.samba.org/samba/style/2010/grey/bgBoxSpecialBottom.gif");
         background-size: 140px 16px;
 }

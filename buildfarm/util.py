@@ -51,12 +51,14 @@ def SambaWebFileLoad(webdir, filename):
     finally:
         f.close()
     def add_virtual_headers(m):
-        f = open(os.path.join(webdir, m.group(1)), 'r')
         try:
+            f = open(os.path.join(webdir, m.group(1)), 'r')
             text = f.read()
-        finally:
+        except:
+            return ''
+        else:
             f.close()
-        return text
+            return text
     text = re.sub('<!--#include virtual="/samba/(.*)" -->',add_virtual_headers , text)
     text = re.sub('href="/samba', 'href="http://www.samba.org/samba', text)
     return text
