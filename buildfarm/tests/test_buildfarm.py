@@ -93,6 +93,9 @@ class BuildFarmTests(BuildFarmTestCase):
     def test_get_tree_builds_empty(self):
         self.assertEquals([], list(self.x.get_tree_builds("trival")))
 
+    def test_latest_tree_builds_empty(self):
+        self.assertEquals([], list(self.x.get_tree_builds("trival")))
+
     def test_get_tree_builds(self):
         path = self.upload_mock_logfile(self.x.builds, "tdb", "myhost", "gcc",
             stdout_contents="BUILD COMMIT REVISION: 12\n", mtime=1200)
@@ -102,6 +105,16 @@ class BuildFarmTests(BuildFarmTestCase):
             stdout_contents="BUILD COMMIT REVISION: 42\n", mtime=4200)
         builds = list(self.x.get_tree_builds("tdb"))
         self.assertEquals(["42", "12"], [x.revision for x in builds])
+
+    def test_latest_tree_builds(self):
+        path = self.upload_mock_logfile(self.x.builds, "talloc", "myhost", "gcc",
+            stdout_contents="BUILD COMMIT REVISION: 12\n", mtime=1200)
+        path = self.upload_mock_logfile(self.x.builds, "talloc", "myhost", "cc",
+            stdout_contents="BUILD COMMIT REVISION: 13\n", mtime=1300)
+        path = self.upload_mock_logfile(self.x.builds, "talloc", "myhost", "cc",
+            stdout_contents="BUILD COMMIT REVISION: 42\n", mtime=4200)
+        builds = list(self.x.latest_tree_builds("talloc"))
+        self.assertEquals(["42", "13"], [x.revision for x in builds])
 
     def test_get_last_builds(self):
         path = self.upload_mock_logfile(self.x.builds, "other", "myhost", "cc",

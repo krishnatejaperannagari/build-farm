@@ -184,7 +184,7 @@ def format_subunit_reason(reason):
 class FailedBuildSearch(object):
 
     def __init__(self):
-        # first is failure second in errors
+        # first is failure messages second in errormessages
         self.repeated = [[], []]
         self.unique = [[], []]
 
@@ -194,7 +194,7 @@ class FailedBuildSearch(object):
         self.repeated[1] = list(set([x for x in self.unique[1] if self.unique[1].count(x) > 1]))
         #finding only unique elemnts and removing the repeated from unique
         self.unique[0] = list(set(list(set(self.unique[0])))^set(self.repeated[0]))
-        self.unique[1] = list(set(list(set(self.unique[1])))^set(self.repeated[1]))        
+        self.unique[1] = list(set(list(set(self.unique[1])))^set(self.repeated[1]))
         #converting to multi line string
         self.repeated[0] = '\n'.join(self.repeated[0])
         self.repeated[1] = '\n'.join(self.repeated[1])
@@ -233,18 +233,28 @@ class LogPrettyPrinter(object):
            are organised
         """
         self.indice = 0
-        self.collapsiblelog = ['', '', '', '', '']
-        self.statussearch = re.compile("(failed)|(error)|(warning)|(mistake)", re.I)
+        self.collapsiblelog = ['', '', '']
+        self.templogstore = ['','']
+        self.collapsiblehtml = ''
+
 
     def organise_results(self, pattern, function):
-        for i in range(2):
+        for i in range(3):
             self.collapsiblelog[i] = pattern.sub(function, self.collapsiblelog[i])
 
-        self.collapsiblelog[2] += self.collapsiblelog[4]
-        self.collapsiblelog[4] = ''
-        self.collapsiblelog[1] += self.collapsiblelog[3]
-        self.collapsiblelog[3] = ''
+        self.collapsiblelog[2] += self.templogstore[1]
+        self.templogstore[1] = ''
+        self.collapsiblelog[1] += self.templogstore[0]
+        self.templogstore[0] = ''
 
+    def classify_colllapsible_html(self, collapsiblehtml, status):
+        match = re.match("(failed)|(error)|(warning)|(mistake)",status, re.I)
+        if match:
+            self.templogstore[1] += collapsiblehtml
+        else:
+            self.templogstore[0] += collapsiblehtml
+        return ''
+ 
     def _pretty_print(self, m):
         output = m.group(1)
         actionName = m.group(2)
@@ -254,36 +264,24 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
-        collapsiblehtml = "".join(make_collapsible_html('action', actionName, output, self.indice, status)) + "<br>"
-        match = self.statussearch.match(m.group(3))
-        if match:
-            self.collapsiblelog[4] += collapsiblehtml
-        else:
-            self.collapsiblelog[3] += collapsiblehtml
-        return ''
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('action', actionName, output, self.indice, status)) + "<br>", m.group(3))
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
-        collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3))) + "<br>"
-        match = self.statussearch.match(m.group(3))
-        if match:
-            self.collapsiblelog[4] += collapsiblehtml
-        else:
-            self.collapsiblelog[3] += collapsiblehtml
-        return ''
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3))) + "<br>", m.group(3))
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped')) + "<br>"
-        self.collapsiblelog[3] += collapsiblehtml
+        self.templogstore[0] += collapsiblehtml
         return ''
 
     def _format_pretestsuite(self, m):
         self.indice += 1
         collapsiblehtml = "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + "\n" + m.group(2) + "\n" + m.group(3) , self.indice, 'ok'))+ "<br>"
         #since status is ok
-        self.collapsiblelog[3] += collapsiblehtml
+        self.templogstore[0] += collapsiblehtml
         return ''
 
     def _format_testsuite(self, m):
@@ -299,23 +297,11 @@ class LogPrettyPrinter(object):
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
-        collapsiblehtml = "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)) + "<br>"
-        match = self.statussearch.match(status)
-        if match:
-            self.collapsiblelog[4] += collapsiblehtml
-        else:
-            self.collapsiblelog[3] += collapsiblehtml
-        return ''
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)) + "<br>", status)
 
     def _format_test(self, m):
         self.indice += 1
-        collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3)))) + "<br>"
-        match = self.statussearch.match(subunit_to_buildfarm_result(m.group(3)))
-        if match:
-            self.collapsiblelog[4] += collapsiblehtml
-        else:
-            self.collapsiblelog[3] += collapsiblehtml
-        return ''
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3)))) + "<br>", subunit_to_buildfarm_result(m.group(3)))
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
@@ -357,8 +343,7 @@ class LogPrettyPrinter(object):
 
         if not buf == "":
             divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, "")) + "\n"
-            pattern = re.compile("Running action\s+test")
-            self.organise_results(pattern, divhtml)
+            self.collapsiblelog[2] = divhtml + '<br>' + self.collapsiblelog[2]
         self.indice += 1
         self.collapsiblelog[1] +=  "".join(make_collapsible_html('action', "Other Details", "\n%s" % self.collapsiblelog[0] , self.indice, "passed"))
 
@@ -1079,7 +1064,7 @@ class FailedBuildsPage(BuildFarmPage):
                 if s.result != 0:
                     show = True
                     break
-            if (show == True or "panic" in build.status().other_failures or "disk full" in build.status().other_failures or 
+            if (show == True or "panic" in build.status().other_failures or "disk full" in build.status().other_failures or
                "timeout" in build.status().other_failures or "inconsistent test result" in build.status().other_failures):
                 index = index + 1
                 try:
