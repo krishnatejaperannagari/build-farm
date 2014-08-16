@@ -38,7 +38,6 @@
 */
 #log .unit.failed  .output {	display: none;}
 #log .unit.skipped .output {	display: none;}
-#log .unit.skipped .output {	display: none;}
 #log .unit.passed  .output {	display: none;}
 #log .unit.error   .output {	display: none;}
 #log .unit.mistake .output {	display: none;}
@@ -65,7 +64,15 @@ a + div.action.status {margin-left: 0.5em;}
 }
 
 /* generically, status correspond to the ok/ok/ok/ok strings */
-.status.passed {
+.nocolor .status.passed,
+.nocolor .status.failed,
+.nocolor .status.panic,
+.nocolor .status.checker,
+.nocolor .status.unknown {
+        color: rgb(0, 0, 0) ;
+}
+
+.status.passed { 
         color: rgb(0, 128, 0);
 }
 

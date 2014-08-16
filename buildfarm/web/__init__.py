@@ -131,8 +131,10 @@ def build_uri(myself, build):
 
 
 def build_link(myself, build):
-    return "<a href='%s'>%s</a>" % (
-        build_uri(myself, build), html_build_status(build.status()))
+    if build.has_log():
+        return "<a href='%s'>%s</a>" % (build_uri(myself, build), html_build_status(build.status()))
+    else:
+        return "<div class='nocolor'>" + html_build_status(build.status()) + "</div>"
 
 
 def tree_uri(myself, tree):
@@ -186,11 +188,80 @@ def format_subunit_reason(reason):
     return "<div class=\"reason\">%s</div>" % reason
 
 
+class FailedBuildSearch(object):
+
+    def __init__(self):
+        # first is failure messages second in errormessages
+        self.repeated = [[], []]
+        self.unique = [[], []]
+
+    def remove_duplicates(self):
+        #finding repeated elements
+        self.repeated[0] = list(set([x for x in self.unique[0] if self.unique[0].count(x) > 1]))
+        self.repeated[1] = list(set([x for x in self.unique[1] if self.unique[1].count(x) > 1]))
+        #finding only unique elemnts and removing the repeated from unique
+        self.unique[0] = list(set(list(set(self.unique[0])))^set(self.repeated[0]))
+        self.unique[1] = list(set(list(set(self.unique[1])))^set(self.repeated[1]))
+        #converting to multi line string
+        self.repeated[0] = '\n'.join(self.repeated[0])
+        self.repeated[1] = '\n'.join(self.repeated[1])
+        self.unique[0] = '\n'.join(self.unique[0])
+        self.unique[1] = '\n'.join(self.unique[1])
+
+    def highlight_errors(self, m):
+
+        if m.group(10):
+            self.unique[1].append(m.group())
+            return "<br><font color='red'><b>" + m.group() + "</b></font><br>"
+        elif m.group(13):
+            self.unique[0].append(m.group())
+            return "<br><font color='red'><b>" + m.group() + "</b></font><br>"
+        elif m.group(16):
+            return "<font color='blue'><b>" + m.group() + "</b></font>"
+        else:
+            return m.group()
+
+    def find_errors(self, highlightedlog):
+
+        highlightedlog = re.sub("""(^.*<.?div.*$)|((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$)|(^fail.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.* unknown.*$)|(^.* no .*$)|(^.* not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$)|(^.*problem.*$))""", self.highlight_errors, highlightedlog, 0, re.M|re.I)
+
+        self.remove_duplicates()
+
+        return [highlightedlog, self.repeated[0], self.repeated[1], self.unique[0], self.unique[1]]
+
+
 class LogPrettyPrinter(object):
 
     def __init__(self):
+        """using a list with five fields the frst one for the original log file, the second one for the passed collapsible html,
+           the third list for storing failed collapsible html the fourth and fifth are for temporarily storing the passed
+           and failed collapsible html when the substitution was taking place. various patterns are compiled and sent to organise
+           results from where the respective functions are called the collapsible parts are classified and finally the results
+           are organised
+        """
         self.indice = 0
+        self.collapsiblelog = ['', '', '']
+        self.templogstore = ['','']
+        self.collapsiblehtml = ''
 
+
+    def organise_results(self, pattern, function):
+        for i in range(3):
+            self.collapsiblelog[i] = pattern.sub(function, self.collapsiblelog[i])
+
+        self.collapsiblelog[2] += self.templogstore[1]
+        self.templogstore[1] = ''
+        self.collapsiblelog[1] += self.templogstore[0]
+        self.templogstore[0] = ''
+
+    def classify_colllapsible_html(self, collapsiblehtml, status):
+        match = re.match("(failed)|(error)|(warning)|(mistake)",status, re.I)
+        if match:
+            self.templogstore[1] += collapsiblehtml
+        else:
+            self.templogstore[0] += collapsiblehtml
+        return ''
+ 
     def _pretty_print(self, m):
         output = m.group(1)
         actionName = m.group(2)
@@ -200,20 +271,24 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
-        return "".join(make_collapsible_html('action', actionName, output, self.indice, status))
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('action', actionName, output, self.indice, status)) + "<br>", m.group(3))
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3)))
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3))) + "<br>", m.group(3))
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
+        collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped')) + "<br>"
+        self.templogstore[0] += collapsiblehtml
+        return ''
 
     def _format_pretestsuite(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + m.group(2) + m.group(3), self.indice, 'ok'))
+        self.templogstore[0] += "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + "\n" + m.group(2) + "\n" + m.group(3) , self.indice, 'ok'))+ "<br>"
+        #since status is ok
+        return ''
 
     def _format_testsuite(self, m):
         testName = m.group(1)
@@ -228,51 +303,58 @@ class LogPrettyPrinter(object):
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
-        return "".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status))
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)) + "<br>", status)
 
     def _format_test(self, m):
         self.indice += 1
-        return "".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3))))
+        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3)))) + "<br>", subunit_to_buildfarm_result(m.group(3)))
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
+        self.collapsiblelog[0] = log
         pattern = re.compile("(Running action\s+([\w\-]+)$(?:\s^.*$)*?\sACTION\ (PASSED|FAILED):\ ([\w\-]+)$)", re.M)
-        log = pattern.sub(self._pretty_print, log)
+        self.organise_results(pattern, self._pretty_print)
         buf = ""
 
-        log = re.sub("""
-              --==--==--==--==--==--==--==--==--==--==--.*?
-              Running\ test\ ([\w\-=,_:\ /.&;]+).*?
-              --==--==--==--==--==--==--==--==--==--==--
-                  (.*?)
-              ==========================================.*?
-              TEST\ (FAILED|PASSED|SKIPPED):.*?
-              ==========================================\s+
-            """, self._format_stage, log)
+        pattern = re.compile("""
+                     --==--==--==--==--==--==--==--==--==--==--.*?
+                     Running\ test\ ([\w\-=,_:\ /.&;]+).*?
+                     --==--==--==--==--==--==--==--==--==--==--
+                         (.*?)
+                     ==========================================.*?
+                     TEST\ (FAILED|PASSED|SKIPPED):.*?
+                     ==========================================\s+
+                  """)
+        self.organise_results(pattern, self._format_stage)
 
         pattern = re.compile("(Running action test).*$\s((?:^.*$\s)*?)^((?:skip-)?testsuite: )", re.M)
-        log = pattern.sub(self._format_pretestsuite, log)
+        self.organise_results(pattern, self._format_pretestsuite)
 
-        log = re.sub("skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?",
-                self._format_skip_testsuite, log)
+        pattern = re.compile("skip-testsuite: ([\w\-=,_:\ /.&; \(\)]+).*?")
+        self.organise_results(pattern, self._format_skip_testsuite)
 
         self.test_links = []
         pattern = re.compile("^testsuite: (.+)$\s((?:^.*$\s)*?)testsuite-(\w+): .*?(?:(\[$\s(?:^.*$\s)*?^\]$)|$)", re.M)
-        log = pattern.sub(self._format_testsuite, log)
-        log = re.sub("""
-              ^test: ([\w\-=,_:\ /.&; \(\)]+).*?
-              (.*?)
-              (success|xfail|failure|skip|uxsuccess): [\w\-=,_:\ /.&; \(\)]+( \[.*?\])?.*?
-           """, self._format_test, log)
+        self.organise_results(pattern, self._format_testsuite)
+
+        pattern = re.compile("""
+                     ^test: ([\w\-=,_:\ /.&; \(\)]+).*?
+                     (.*?)
+                     (success|xfail|failure|skip|uxsuccess): [\w\-=,_:\ /.&; \(\)]+( \[.*?\])?.*?
+                  """)
+        self.organise_results(pattern, self._format_test)
 
         for tst in self.test_links:
             buf = "%s\n<A href='#%s'>%s</A>" % (buf, tst[1], tst[0])
 
         if not buf == "":
-            divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, ""))+"\n"
-            log = re.sub("Running action\s+test", divhtml, log)
-        log = re.sub("<pre></pre>", "", log)
-        return "<pre>%s</pre>" % log
+            divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, "")) + "\n"
+            self.collapsiblelog[2] = divhtml + '<br>' + self.collapsiblelog[2]
+        self.indice += 1
+        self.collapsiblelog[1] +=  "".join(make_collapsible_html('action', "Other Details", "\n%s" % self.collapsiblelog[0] , self.indice, "passed"))
+
+        log = [self.collapsiblelog[1], self.collapsiblelog[2], self.indice]
+        return log
 
 
 def print_log_pretty(log):
@@ -531,6 +613,36 @@ class ViewBuildPage(BuildFarmPage):
             yield "<div id='actionList'>"
             # These can be pretty wide -- perhaps we need to
             # allow them to wrap in some way?
+
+            if log is not None:
+                collapsiblelog = print_log_pretty(log)
+                collapsiblelog[2] += 1
+
+                parsedcollapsiblehtml = FailedBuildSearch().find_errors(collapsiblelog[1])
+
+                if parsedcollapsiblehtml[1] != '':
+                    parsedcollapsiblehtml[1] = '<font color="red"><b>Failures:</b></font> \n' + parsedcollapsiblehtml[1] + '<br><br>'
+                if parsedcollapsiblehtml[2] != '':
+                    parsedcollapsiblehtml[1] += '<font color="red"><b>Errors:</b></font> \n' + parsedcollapsiblehtml[2] + '<br>'
+
+                if parsedcollapsiblehtml[3] != '':
+                    parsedcollapsiblehtml[3] = '<font color="red"><b>Failures:</b></font> \n' + parsedcollapsiblehtml[3] + '<br><br>'
+                if parsedcollapsiblehtml[4] != '':
+                    parsedcollapsiblehtml[3] += '<font color="red"><b>Errors:</b></font> \n' + parsedcollapsiblehtml[4] + '<br>'
+
+            if parsedcollapsiblehtml[1]  != "" or parsedcollapsiblehtml[3] != "":
+                yield "<h2>Problamatic messages:</h2>"
+                if parsedcollapsiblehtml[1]  != "":
+                    yield "".join(make_collapsible_html('action', "Repeated Errors and Failures", "\n%s" % parsedcollapsiblehtml[1] , collapsiblelog[2] + 1, "errorlog"))
+                    yield "<br>"
+                if parsedcollapsiblehtml[3]  != "":
+                    yield "".join(make_collapsible_html('action', "Errors and Failures", "\n%s" % parsedcollapsiblehtml[3] , collapsiblelog[2] + 2, "errorlog"))
+
+
+            if parsedcollapsiblehtml[0] != '':
+                    yield "<h2>Failed part:</h2>"
+                    yield parsedcollapsiblehtml[0]
+
             if err == "":
                 yield "<h2>No error log available</h2>\n"
                 yield "<br>"
@@ -539,16 +651,16 @@ class ViewBuildPage(BuildFarmPage):
                 yield "".join(make_collapsible_html('action', "Error Output", "\n%s\n" % err, "stderr-0", "errorlog"))
                 yield "<br>"
 
-            if log is None:
+            if collapsiblelog[0] == '':
                 yield "<h2>No build log available</h2>"
                 yield "<br>"
             else:
                 yield "<h2>Build log:</h2>\n"
-                yield print_log_pretty(log)
-                yield "<br>"
+                yield collapsiblelog[0]
 
             yield "<p><small>Some of the above icons derived from the <a href='https://www.gnome.org'>Gnome Project</a>'s stock icons.</small></p>"
             yield "</div>"
+
         else:
             yield "<p>Switch to the <a href='%s?function=View+Build;host=%s;tree=%s;"\
                   "compiler=%s%s' title='Switch to colourful, javascript-enabled, styled"\
@@ -976,6 +1088,59 @@ class RecentCheckinsPage(HistoryPage):
         yield "<br>"
 
 
+class FailedBuildsPage(BuildFarmPage):
+
+    def render_html(self, myself, tree):
+
+        def build_platform(build):
+            host = self.buildfarm.hostdb[build.host]
+            return host.platform.encode("utf-8")
+
+        builds = self.buildfarm.latest_tree_builds(tree)
+        yield "<div id='recent-builds' class='build-section'>"
+        yield "<h2>Failed Builds of %s</h2>" % (tree)
+        yield "<table class='real'>"
+        yield "<thead>"
+        yield "<tr>"
+        yield "<th>Age"
+        yield "<th>Revision</th>"
+        yield "<th>Tree</th>"
+        yield "<th>Platform</th>"
+        yield "<th>Host</th>"
+        yield "<th>Compiler</th>"
+        yield "<th>Status</th>"
+        yield "</tr></thead>"
+        yield "<tbody>"
+
+        index = 0
+        for build in builds[:100]:
+            show = False
+            for s in build.status().stages:
+                if s.result != 0:
+                    show = True
+                    break
+            if (show == True or "panic" in build.status().other_failures or "disk full" in build.status().other_failures or
+               "timeout" in build.status().other_failures or "inconsistent test result" in build.status().other_failures):
+                index = index + 1
+                try:
+                    build_platform_name = build_platform(build)
+                    yield "<tr>"
+                    yield "<td>%s</td>" % util.dhm_time(build.age)
+                    yield "<td>%s</td>" % revision_link(myself, build.revision, build.tree)
+                    yield "<td>%s</td>" % build.tree
+                    yield "<td>%s</td>" % build_platform_name
+                    yield "<td>%s</td>" % host_link(myself, build.host)
+                    yield "<td>%s</td>" % build.compiler
+                    yield "<td>%s</td>" % build_link(myself, build)
+                    yield "</tr>"
+                except hostdb.NoSuchHost:
+                    pass
+                if index == 15:
+                    break
+        yield "</tbody></table>"
+        yield "</div>"
+
+
 class BuildFarmApp(object):
 
     def __init__(self, buildfarm):
@@ -1103,6 +1268,9 @@ class BuildFarmApp(object):
                     gitstart = int(gitstart)
                 page = RecentCheckinsPage(self.buildfarm)
                 yield "".join(self.html_page(form, page.render(myself, tree, gitstart, author)))
+            elif fn_name == "Failed_Builds":
+                page = FailedBuildsPage(self.buildfarm)
+                yield "".join(self.html_page(form, page.render_html(myself, tree)))
             elif fn_name == "diff":
                 revision = get_param(form, 'revision')
                 page = DiffPage(self.buildfarm)
@@ -1199,6 +1367,7 @@ class BuildFarmApp(object):
                     start_response('200 OK', [
                         ('Content-type', 'text/html; charset=utf-8')])
                     yield "".join(self.html_page(form, page.render(myself, build, False, limit)))
+
             elif fn in ("", None):
                 start_response('200 OK', [
                     ('Content-type', 'text/html; charset=utf-8')])
