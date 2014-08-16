@@ -254,7 +254,7 @@ class LogPrettyPrinter(object):
         self.collapsiblelog[1] += self.templogstore[0]
         self.templogstore[0] = ''
 
-    def classify_colllapsible_html(self, collapsiblehtml, status):
+    def classify_collapsible_html(self, collapsiblehtml, status):
         match = re.match("(failed)|(error)|(warning)|(mistake)",status, re.I)
         if match:
             self.templogstore[1] += collapsiblehtml
@@ -271,22 +271,22 @@ class LogPrettyPrinter(object):
              output = print_log_cc_checker(output)
 
         self.indice += 1
-        return  self.classify_colllapsible_html("".join(make_collapsible_html('action', actionName, output, self.indice, status)) + "<br>", m.group(3))
+        return  self.classify_collapsible_html("".join(make_collapsible_html('action', actionName, output, self.indice, status)), m.group(3))
 
     # log is already CGI-escaped, so handle '>' in test name by handling &gt
     def _format_stage(self, m):
         self.indice += 1
-        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3))) + "<br>", m.group(3))
+        return  self.classify_collapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2), self.indice, m.group(3))), m.group(3))
 
     def _format_skip_testsuite(self, m):
         self.indice += 1
-        collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped')) + "<br>"
+        collapsiblehtml = "".join(make_collapsible_html('test', m.group(1), '', self.indice, 'skipped'))
         self.templogstore[0] += collapsiblehtml
         return ''
 
     def _format_pretestsuite(self, m):
         self.indice += 1
-        self.templogstore[0] += "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + "\n" + m.group(2) + "\n" + m.group(3) , self.indice, 'ok'))+ "<br>"
+        self.templogstore[0] += "".join(make_collapsible_html('pretest', 'Pretest infos', m.group(1) + "\n" + m.group(2) + "\n" + m.group(3) , self.indice, 'ok'))
         #since status is ok
         return ''
 
@@ -303,11 +303,11 @@ class LogPrettyPrinter(object):
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
             backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
-        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)) + "<br>", status)
+        return  self.classify_collapsible_html("".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)), status)
 
     def _format_test(self, m):
         self.indice += 1
-        return  self.classify_colllapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3)))) + "<br>", subunit_to_buildfarm_result(m.group(3)))
+        return  self.classify_collapsible_html("".join(make_collapsible_html('test', m.group(1), m.group(2)+format_subunit_reason(m.group(4)), self.indice, subunit_to_buildfarm_result(m.group(3)))), subunit_to_buildfarm_result(m.group(3)))
 
     def pretty_print(self, log):
         # do some pretty printing for the actions
@@ -348,8 +348,8 @@ class LogPrettyPrinter(object):
             buf = "%s\n<A href='#%s'>%s</A>" % (buf, tst[1], tst[0])
 
         if not buf == "":
-            divhtml = "".join(make_collapsible_html('testlinks', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, "")) + "\n"
-            self.collapsiblelog[2] = divhtml + '<br>' + self.collapsiblelog[2]
+            divhtml = "".join(make_collapsible_html('action', 'Shortcut to failed tests', "<a name='shortcut2errors'></a>%s" % buf, self.indice, "failed")) + "\n"
+            self.collapsiblelog[2] = divhtml + self.collapsiblelog[2]
         self.indice += 1
         self.collapsiblelog[1] +=  "".join(make_collapsible_html('action', "Other Details", "\n%s" % self.collapsiblelog[0] , self.indice, "passed"))
 
@@ -424,30 +424,24 @@ def make_collapsible_html(type, title, output, id, status=""):
     :param type: the logical type of it. e.g. "test" or "action"
     :param title: the title to be displayed
     """
-    if status.lower() in ("", "failed"):
-        icon = '/icon_hide_16.png'
-    else:
-        icon = '/icon_unhide_16.png'
+    icon = '/icon_unhide_16.png'
 
     # trim leading and trailing whitespace
     output = output.strip()
 
     # note that we may be inside a <pre>, so we don't put any extra whitespace
     # in this html
-    yield "</pre>"
-    yield "<br>"
     yield "<div class='%s unit %s' id='%s-%s'>" % (type, status, type, id)
     yield "<a name='lnk-%s-%s' href=\"javascript:handle('%s');\">" % (type, id, id)
     yield "<img id='img-%s' name='img-%s' alt='%s' src='%s' />" % (id, id, status, icon)
     yield "<div class='%s title'>%s</div></a>" % (type, title)
-    yield "<div class='%s status %s'>%s</div>" % (type, status, status)
+    yield "<div class='%s status %s' style='position:absolute;right:25px'>%s</div>" % (type, status, status)
     yield "<div class='%s output' id='output-%s'>" % (type, id)
     yield "<br>"
     if output:
-        yield "<pre>%s \n </pre>" % (output,)
+        yield "<pre>%s<br></pre>" % (output,)
     yield "</div></div>"
     yield "<br>"
-    yield "<pre>"
 
 
 def web_paths(t, paths):
@@ -1085,7 +1079,7 @@ class RecentCheckinsPage(HistoryPage):
         yield "<input type='hidden' name='tree' value='%s'/>" % tree
         yield "</div>\n"
         yield "</form>"
-        yield "<br>"
+        yield "<br><br>"
 
 
 class FailedBuildsPage(BuildFarmPage):
@@ -1099,7 +1093,7 @@ class FailedBuildsPage(BuildFarmPage):
         builds = self.buildfarm.latest_tree_builds(tree)
         yield "<div id='recent-builds' class='build-section'>"
         yield "<h2>Failed Builds of %s</h2>" % (tree)
-        yield "<table class='real'>"
+        yield "<table class='newtable'>"
         yield "<thead>"
         yield "<tr>"
         yield "<th>Age"
@@ -1165,7 +1159,7 @@ class BuildFarmApp(object):
         yield "".join(select("compiler", dict(zip(self.buildfarm.compilers, self.buildfarm.compilers)), default=compiler))
         yield "<br/><br/>"
         functions_dict = {
-            'View Build': 'View Build', 'Summary': 'Summary', 'View Host': 'View Host',
+            'View Build': 'View Build', 'Summary': 'Summary', 'View Host': 'View Host', 'Failed Builds': 'Failed Builds',
             'Recent Builds': 'Recent Builds', 'Recent Checkins': 'Recent Checkins',
             }
         yield "".join(select("function", functions_dict, default=function))
