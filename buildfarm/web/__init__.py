@@ -190,44 +190,20 @@ def format_subunit_reason(reason):
 
 class FailedBuildSearch(object):
 
-    def __init__(self):
-        # first is failure messages second in errormessages
-        self.repeated = [[], []]
-        self.unique = [[], []]
-
-    def remove_duplicates(self):
-        #finding repeated elements
-        self.repeated[0] = list(set([x for x in self.unique[0] if self.unique[0].count(x) > 1]))
-        self.repeated[1] = list(set([x for x in self.unique[1] if self.unique[1].count(x) > 1]))
-        #finding only unique elemnts and removing the repeated from unique
-        self.unique[0] = list(set(list(set(self.unique[0])))^set(self.repeated[0]))
-        self.unique[1] = list(set(list(set(self.unique[1])))^set(self.repeated[1]))
-        #converting to multi line string
-        self.repeated[0] = '\n'.join(self.repeated[0])
-        self.repeated[1] = '\n'.join(self.repeated[1])
-        self.unique[0] = '\n'.join(self.unique[0])
-        self.unique[1] = '\n'.join(self.unique[1])
-
     def highlight_errors(self, m):
 
-        if m.group(10):
-            self.unique[1].append(m.group())
+        if m.group(9) or m.group(12):
             return "<br><font color='red'><b>" + m.group() + "</b></font><br>"
-        elif m.group(13):
-            self.unique[0].append(m.group())
-            return "<br><font color='red'><b>" + m.group() + "</b></font><br>"
-        elif m.group(16):
+        elif m.group(15):
             return "<font color='blue'><b>" + m.group() + "</b></font>"
         else:
             return m.group()
 
     def find_errors(self, highlightedlog):
 
-        highlightedlog = re.sub("""(^.*<.?div.*$)|((^.*error_.*$)|(^.*exception.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$)|(^fail.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.* unknown.*$)|(^.* no .*$)|(^.* not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$)|(^.*problem.*$))""", self.highlight_errors, highlightedlog, 0, re.M|re.I)
+        highlightedlog = re.sub("""(^.*<.?div.*$)|((^.*error_.*$)|(^.*failed_.*$)|(^pass.*$)|(^.* pass.*$)|(^.*success.*$)|(^.*copyright.*$))|((^.* error.*$)|(^error.*$))|((^.* fail.*$)|(^fail.*$))|((^.*warning.*$)|(^none.*$)|(^.* skip.*$)|(^skip.*$)|(^.* unknown.*$)|(^.* no .*$)|(^.* not .*$)|(^.*severe.*$)|(^.* fault.*$)|(^.* invalid.*$)|(^.* incorrect.*$)|(^.*unable .*$)|(^.*cannot .*$)|(^.*conflict.*$)|(^.* corrupt.*$)|(^.* missing.*$)|(^.*abort.*$)|(^.*denied.*$)|(^.* terminate.*$)|(^.*overflow.*$)|(^.* wrong .*$)|(^.*forbidden.*$)|(^.*disabled.*$)|(^.*disconnect.*$)|(^.*unavailable.*$)|(^.*undefined.*$)|(^.* unresolved.*$)|(^.*problem.*$)|(^.*exception.*$))""", self.highlight_errors, highlightedlog, 0, re.M|re.I)
 
-        self.remove_duplicates()
-
-        return [highlightedlog, self.repeated[0], self.repeated[1], self.unique[0], self.unique[1]]
+        return highlightedlog
 
 
 class LogPrettyPrinter(object):
@@ -242,7 +218,6 @@ class LogPrettyPrinter(object):
         self.indice = 0
         self.collapsiblelog = ['', '', '']
         self.templogstore = ['','']
-        self.collapsiblehtml = ''
 
 
     def organise_results(self, pattern, function):
@@ -302,7 +277,7 @@ class LogPrettyPrinter(object):
         backlink = ""
         if m.group(3) in ("error", "failure"):
             self.test_links.append([testName, 'lnk-test-%d' %self.indice])
-            backlink = "<p><a href='#shortcut2errors'>back to error list</a>"
+            backlink = "<br><p><a href='#shortcut2errors'>back to error list</a>"
         return  self.classify_collapsible_html("".join(make_collapsible_html('test', testName, content+errorReason+backlink, self.indice, status)), status)
 
     def _format_test(self, m):
@@ -353,7 +328,7 @@ class LogPrettyPrinter(object):
         self.indice += 1
         self.collapsiblelog[1] +=  "".join(make_collapsible_html('action', "Other Details", "\n%s" % self.collapsiblelog[0] , self.indice, "passed"))
 
-        log = [self.collapsiblelog[1], self.collapsiblelog[2], self.indice]
+        log = [self.collapsiblelog[1], self.collapsiblelog[2]]
         return log
 
 
@@ -610,32 +585,10 @@ class ViewBuildPage(BuildFarmPage):
 
             if log is not None:
                 collapsiblelog = print_log_pretty(log)
-                collapsiblelog[2] += 1
 
-                parsedcollapsiblehtml = FailedBuildSearch().find_errors(collapsiblelog[1])
-
-                if parsedcollapsiblehtml[1] != '':
-                    parsedcollapsiblehtml[1] = '<font color="red"><b>Failures:</b></font> \n' + parsedcollapsiblehtml[1] + '<br><br>'
-                if parsedcollapsiblehtml[2] != '':
-                    parsedcollapsiblehtml[1] += '<font color="red"><b>Errors:</b></font> \n' + parsedcollapsiblehtml[2] + '<br>'
-
-                if parsedcollapsiblehtml[3] != '':
-                    parsedcollapsiblehtml[3] = '<font color="red"><b>Failures:</b></font> \n' + parsedcollapsiblehtml[3] + '<br><br>'
-                if parsedcollapsiblehtml[4] != '':
-                    parsedcollapsiblehtml[3] += '<font color="red"><b>Errors:</b></font> \n' + parsedcollapsiblehtml[4] + '<br>'
-
-            if parsedcollapsiblehtml[1]  != "" or parsedcollapsiblehtml[3] != "":
-                yield "<h2>Problamatic messages:</h2>"
-                if parsedcollapsiblehtml[1]  != "":
-                    yield "".join(make_collapsible_html('action', "Repeated Errors and Failures", "\n%s" % parsedcollapsiblehtml[1] , collapsiblelog[2] + 1, "errorlog"))
-                    yield "<br>"
-                if parsedcollapsiblehtml[3]  != "":
-                    yield "".join(make_collapsible_html('action', "Errors and Failures", "\n%s" % parsedcollapsiblehtml[3] , collapsiblelog[2] + 2, "errorlog"))
-
-
-            if parsedcollapsiblehtml[0] != '':
+            if collapsiblelog[1] != '':
                     yield "<h2>Failed part:</h2>"
-                    yield parsedcollapsiblehtml[0]
+                    yield FailedBuildSearch().find_errors(collapsiblelog[1])
 
             if err == "":
                 yield "<h2>No error log available</h2>\n"
