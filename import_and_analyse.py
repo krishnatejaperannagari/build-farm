@@ -39,7 +39,7 @@ smtp = smtplib.SMTP()
 smtp.connect()
 
 
-def broken_build_check(second_build, rev):
+def broken_build_check(builds, second_build, rev):
 
     original_build = second_build
     third_build = None
@@ -57,9 +57,9 @@ def broken_build_check(second_build, rev):
     try:
         if opts.dry_run:
             # Perhaps this is a dry run and rev is not in the database yet so get build itself
-            third_build = buildfarm.builds.get_latest_build(build.tree, build.host, build.compiler)
+            third_build = builds.get_latest_build(second_build.tree, second_build.host, second_build.compiler)
         else:
-            third_build = buildfarm.builds.get_previous_build(build.tree, build.host, build.compiler, rev)
+            third_build = builds.get_previous_build(second_build.tree, second_build.host, second_build.compiler, rev)
     except NoSuchBuildError:
         #cant send a nasty mail unless there are two builds
         return None
@@ -92,7 +92,7 @@ def broken_build_check(second_build, rev):
 
         try:
             #gets a previous build
-            third_build = buildfarm.builds.get_previous_build(second_build.tree, second_build.host, second_build.compiler, rev)
+            third_build = builds.get_previous_build(second_build.tree, second_build.host, second_build.compiler, rev)
         except NoSuchBuildError:
             break
 
@@ -102,7 +102,7 @@ def broken_build_check(second_build, rev):
     elif count == 2:
         #two builds have regressed checks if the tree doesnt upload build logs frequently or dryrun
         #though there is regression we need to check as the previous mail would have been sent in third case 1 month ago only
-        if int(first_build.upload_time - build.upload_time) > 2600000 or opts.dry_run:
+        if int(first_build.upload_time - second_build.upload_time) > 2600000 or opts.dry_run:
             return [first_build, second_build, None]
         else:
             return None
@@ -175,35 +175,36 @@ The build may have been broken by one of the following commits:
     else:
         print msg.as_string()
 
+#variable created for testing purposes
+if __name__ == '__main__':
+    builds = buildfarm.builds
+    for build in buildfarm.get_new_builds():
+        if build in builds:
+            continue
 
-
-for build in buildfarm.get_new_builds():
-    if build in buildfarm.builds:
-        continue
-
-    if not opts.dry_run:
-        old_build = build
+        if not opts.dry_run:
+            old_build = build
+            try:
+                build = builds.upload_build(old_build)
+            except MissingRevisionInfo:
+                print "No revision info in %r, skipping" % build
+                continue
         try:
-            build = buildfarm.builds.upload_build(old_build)
+            rev = build.revision_details()
         except MissingRevisionInfo:
+            #no point in sending mail as there is no rev and this is not added to database
             print "No revision info in %r, skipping" % build
             continue
-    try:
-        rev = build.revision_details()
-    except MissingRevisionInfo:
-        #no point in sending mail as there is no rev and this is not added to database
-        print "No revision info in %r, skipping" % build
-        continue
 
-    if opts.verbose >= 2:
-        print "%s... " % build,
-        print str(build.status())
+        if opts.verbose >= 2:
+            print "%s... " % build,
+            print str(build.status())
 
-    x = broken_build_check(build, rev)
-    if x:
-        send_mail(x[0], x[1], x[2])
-    if not opts.dry_run:
-        old_build.remove()
-        buildfarm.commit()
+        x = broken_build_check(builds, build, rev)
+        if x:
+            send_mail(x[0], x[1], x[2])
+        if not opts.dry_run:
+            old_build.remove()
+            buildfarm.commit()
 
 smtp.quit()
