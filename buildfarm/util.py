@@ -45,16 +45,18 @@ def FileLoad(filename):
 
 def SambaWebFileLoad(webdir, filename):
     """loads file and changes the links to suit buildfarm"""
-    f = open(os.path.join(webdir, filename), 'r')
     try:
+        f = open(os.path.join(webdir, filename), 'r')
         text = f.read()
-    finally:
+    except IOError:
+        return ''
+    else:
         f.close()
     def add_virtual_headers(m):
         try:
             f = open(os.path.join(webdir, m.group(1)), 'r')
             text = f.read()
-        except:
+        except IOError:
             return ''
         else:
             f.close()

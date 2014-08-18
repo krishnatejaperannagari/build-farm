@@ -114,7 +114,7 @@ class BuildFarmTests(BuildFarmTestCase):
         path = self.upload_mock_logfile(self.x.builds, "talloc", "myhost", "cc",
             stdout_contents="BUILD COMMIT REVISION: 42\n", mtime=4200)
         builds = list(self.x.latest_tree_builds("talloc"))
-        self.assertEquals(["42", "13"], [x.revision for x in builds])
+        self.assertEquals(["42", "13", "12"], [x.revision for x in builds])
 
     def test_get_last_builds(self):
         path = self.upload_mock_logfile(self.x.builds, "other", "myhost", "cc",
@@ -137,21 +137,15 @@ class BuildFarmTests(BuildFarmTestCase):
 
     def test_get_summary_builds(self):
         path = self.upload_mock_logfile(self.x.builds, "other", "myhost", "cc",
-            "BUILD COMMIT REVISION: 12\n", mtime=1200)
+            "BUILD COMMIT REVISION: 12\nNo space left on device\n", mtime=1200)
         path = self.upload_mock_logfile(self.x.builds, "trivial", "myhost", "cc",
-            "BUILD COMMIT REVISION: 13\n", mtime=1300)
+            "BUILD COMMIT REVISION: 13\nMaximum time expired in timelimit\n", mtime=1300)
         path = self.upload_mock_logfile(self.x.builds, "trivial", "myhost", "cc",
-            "BUILD COMMIT REVISION: 42\n", mtime=4200)
+            "BUILD COMMIT REVISION: 42\nPANIC:\n", mtime=4200)
         builds = list(self.x.get_summary_builds())
         self.assertEquals(2, len(builds))
-        self.assertEquals(4200, builds[0].upload_time)
-        self.assertEquals("42", builds[0].revision_details())
-        self.assertEquals("trivial", builds[0].tree)
-        self.assertEquals(1200, builds[1].upload_time)
-        self.assertEquals("12", builds[1].revision_details())
-        self.assertEquals("other", builds[1].tree)
-        builds = list(self.x.get_summary_builds(min_age=4000))
-        self.assertEquals(1, len(builds))
+        self.assertEquals("disk full", str(builds[0][1]))
+        self.assertEquals("panic", str(builds[1][1]))
         builds = list(self.x.get_summary_builds(min_age=5000))
         self.assertEquals(0, len(builds))
 
