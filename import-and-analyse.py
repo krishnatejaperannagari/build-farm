@@ -16,7 +16,9 @@ from buildfarm.build import (
     NoSuchBuildError,
     )
 from buildfarm import BuildFarm
-from buildfarm.web import build_uri
+from buildfarm.web import (
+    build_uri,
+    )
 from email.mime.text import MIMEText
 import optparse
 import resource
@@ -36,23 +38,90 @@ buildfarm = BuildFarm(timeout=40.0)
 smtp = smtplib.SMTP()
 smtp.connect()
 
-def check_and_send_mails(cur, old):
 
-    if cur.tree is "waf":
+def broken_build_check(second_build, rev):
+
+    original_build = second_build
+    third_build = None
+    first_build = None
+    count = 1
+
+    if second_build.tree is "waf":
         # no point sending emails, as the email addresses are invalid
-        return
+        return None
 
-    if cur.tree is "samba_3_waf":
+    if second_build.tree is "samba_3_waf":
         # no emails for this until it stabilises a bit
-        return
+        return None
+
+    try:
+        if opts.dry_run:
+            # Perhaps this is a dry run and rev is not in the database yet so get build itself
+            third_build = buildfarm.builds.get_latest_build(build.tree, build.host, build.compiler)
+        else:
+            third_build = buildfarm.builds.get_previous_build(build.tree, build.host, build.compiler, rev)
+    except NoSuchBuildError:
+        #cant send a nasty mail unless there are two builds
+        return None
+
+    #getting the first failed build in the sequence and send the mail to the commiters and authors of that build
+    while(True):
+
+        t = buildfarm.trees[second_build.tree]
+        diff = BuildDiff(t, third_build, second_build)
+
+        if not diff.is_regression():
+            #checks if the builds have regressed else breaks the loop
+            if opts.verbose >= 3:
+                print "... hasn't regressed since %s: %s" % (diff.old_rev, diff.old_status)
+            break
+
+        count += 1
+        first_build = second_build
+        second_build = third_build
+        third_build = None
+
+        if opts.dry_run:
+            break
+
+        try:
+            rev = second_build.revision_details()
+        except MissingRevisionInfo:
+            #no rev
+            break
+
+        try:
+            #gets a previous build
+            third_build = buildfarm.builds.get_previous_build(second_build.tree, second_build.host, second_build.compiler, rev)
+        except NoSuchBuildError:
+            break
+
+    if count > 2:
+        #three or more builds have failed consequtively
+        return [first_build, second_build, original_build]
+    elif count == 2:
+        #two builds have regressed checks if the tree doesnt upload build logs frequently or dryrun
+        #though there is regression we need to check as the previous mail would have been sent in third case 1 month ago only
+        if int(first_build.upload_time - build.upload_time) > 2600000 or opts.dry_run:
+            return [first_build, second_build, None]
+        else:
+            return None
+    elif count == 1:
+        #checks if the current build has failed and sends the mail  since there is no regression
+        show = False
+        for s in original_build.status().stages:
+            if s.result != 0:
+                show = True
+        if show or "panic" in original_build.status().other_failures and not "disk full" in original_build.status().other_failures and not "timeout" in original_build.status().other_failures:
+            return [second_build, third_build, None]
+        else:
+            return None
+
+
+def send_mail(cur, old, original):
 
     t = buildfarm.trees[cur.tree]
     diff = BuildDiff(t, old, cur)
-
-    if not diff.is_regression():
-        if opts.verbose >= 3:
-            print "... hasn't regressed since %s: %s" % (diff.old_rev, diff.old_status)
-        return
 
     recipients = set()
     change_log = ""
@@ -93,14 +162,19 @@ The build may have been broken by one of the following commits:
         "build_link": build_uri("http://build.samba.org/build.cgi", cur)
         }
 
+    if original:
+        body += "The failures are continued till this build %s. ", build_uri("http://build.samba.org/build.cgi", original)
+
     msg = MIMEText(body)
     msg["Subject"] = "BUILD of %s:%s BROKEN on %s with %s AT REVISION %s" % (cur.tree, t.branch, cur.host, cur.compiler, diff.new_rev)
     msg["From"] = "\"Build Farm\" <build@samba.org>"
     msg["To"] = ",".join(recipients)
+
     if not opts.dry_run:
         smtp.sendmail(msg["From"], [msg["To"]], msg.as_string())
     else:
         print msg.as_string()
+
 
 
 for build in buildfarm.get_new_builds():
@@ -114,10 +188,10 @@ for build in buildfarm.get_new_builds():
         except MissingRevisionInfo:
             print "No revision info in %r, skipping" % build
             continue
-
     try:
         rev = build.revision_details()
     except MissingRevisionInfo:
+        #no point in sending mail as there is no rev and this is not added to database
         print "No revision info in %r, skipping" % build
         continue
 
@@ -125,19 +199,9 @@ for build in buildfarm.get_new_builds():
         print "%s... " % build,
         print str(build.status())
 
-    try:
-        if opts.dry_run:
-            # Perhaps this is a dry run and rev is not in the database yet?
-            prev_build = buildfarm.builds.get_latest_build(build.tree, build.host, build.compiler)
-        else:
-            prev_build = buildfarm.builds.get_previous_build(build.tree, build.host, build.compiler, rev)
-    except NoSuchBuildError:
-        if opts.verbose >= 1:
-            print "Unable to find previous build for %s,%s,%s" % (build.tree, build.host, build.compiler)
-        # Can't send a nastygram until there are 2 builds..
-    else:
-        check_and_send_mails(build, prev_build)
-
+    x = broken_build_check(build, rev)
+    if x:
+        send_mail(x[0], x[1], x[2])
     if not opts.dry_run:
         old_build.remove()
         buildfarm.commit()
