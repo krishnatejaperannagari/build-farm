@@ -55,13 +55,8 @@ import time
 import wsgiref.util
 webdir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "web"))
 
-GITWEB_BASE = "https://gitweb.samba.org"
+GITWEB_BASE = "//gitweb.samba.org"
 HISTORY_HORIZON = 1000
-
-# Maximum age of builds to consider when displaying summary page statistics.
-# Note that trees only get rebuilt when they change, so this value is
-# intentionally set to a high value to cope with trees that don't change often.
-SUMMARY_MAX_BUILD_AGE = (180 * 24 * 60 * 60)
 
 # this is automatically filled in
 deadhosts = []
@@ -806,7 +801,7 @@ class ViewSummaryPage(BuildFarmPage):
         # output when we want
         broken_table = ""
 
-        builds = self.buildfarm.get_summary_builds(min_age=time.time() - SUMMARY_MAX_BUILD_AGE)
+        builds = self.buildfarm.get_summary_builds(min_age=time.time() - BuildFarm.DEADAGE)
 
         for tree, status in builds:
             host_count[tree]+=1
@@ -1087,7 +1082,6 @@ class FailedBuildsPage(BuildFarmPage):
         yield "</tbody></table>"
         yield "</div>"
 
-
 class BuildFarmApp(object):
 
     def __init__(self, buildfarm):
@@ -1130,10 +1124,10 @@ class BuildFarmApp(object):
         yield "    <meta name='description' contents='Home of the Samba Build Farm, the automated testing facility.'/>\n"
         yield "    <meta name='robots' contents='noindex'/>"
         yield "    <link rel='stylesheet' href='/build_farm.css' type='text/css' media='all'/>"
-        yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/images/favicon.ico'/>"
-        yield "    <link rel='shortcut icon' href='http://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
-        yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='http://www.samba.org/samba/style/2010/grey/screen.css'/>"
-        yield "    <link rel='stylesheet' type='text/css' media='print' href='http://www.samba.org/samba/style/2010/grey/print.css'/> "
+        yield "    <link rel='shortcut icon' href='https://www.samba.org/samba/images/favicon.ico'/>"
+        yield "    <link rel='shortcut icon' href='https://www.samba.org/samba/style/2010/grey/favicon.ico'/>"
+        yield "    <link rel='stylesheet' type='text/css' media='screen,projection' href='https://www.samba.org/samba/style/2010/grey/screen.css'/>"
+        yield "    <link rel='stylesheet' type='text/css' media='print' href='https://www.samba.org/samba/style/2010/grey/print.css'/> "
         yield "  </head>"
         yield "<body>"
 

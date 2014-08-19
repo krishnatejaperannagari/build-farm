@@ -146,6 +146,10 @@ class BuildFarmTests(BuildFarmTestCase):
         self.assertEquals(2, len(builds))
         self.assertEquals("disk full", str(builds[0][1]))
         self.assertEquals("panic", str(builds[1][1]))
+        self.assertEquals("other", builds[0][0])
+        self.assertEquals("trivial", builds[1][0])
+        builds = list(self.x.get_summary_builds(min_age=4000))
+        self.assertEquals(1, len(builds))
         builds = list(self.x.get_summary_builds(min_age=5000))
         self.assertEquals(0, len(builds))
 

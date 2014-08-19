@@ -56,7 +56,7 @@ def SambaWebFileLoad(webdir, filename):
         try:
             f = open(os.path.join(webdir, m.group(1)), 'r')
             text = f.read()
-        except IOError:
+        except:
             return ''
         else:
             f.close()
