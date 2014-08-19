@@ -36,9 +36,9 @@
 #log div.unit.mistake {	background-color: rgb(180, 180, 255); }
 #log div.unit.pretest.ok {	background-color: rgb(180, 255, 180); }
 */
-#log .unit.failed  .output {	display: none;}
-#log .unit.skipped .output {	display: none;}
-#log .unit.skipped .output {	display: none;}
+#log .unit.failed  .output {   display: block;}
+#log .unit.skipped .output {   display: block;}
+#log .unit.skipped .output {   display: block;}
 #log .unit.passed  .output {	display: none;}
 #log .unit.error   .output {	display: none;}
 #log .unit.mistake .output {	display: none;}

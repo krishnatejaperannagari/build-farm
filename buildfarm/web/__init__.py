@@ -346,11 +346,11 @@ def make_collapsible_html(type, title, output, id, status=""):
 
     # note that we may be inside a <pre>, so we don't put any extra whitespace
     # in this html
-    yield "<div class='%s unit %s' id='%s-%s'>" % (type, status, type, id)
+    yield "<br><div class='%s unit %s' id='%s-%s'>" % (type, status, type, id)
     yield "<a name='lnk-%s-%s' href=\"javascript:handle('%s');\">" % (type, id, id)
     yield "<img id='img-%s' name='img-%s' alt='%s' src='%s' />" % (id, id, status, icon)
     yield "<div class='%s title'>%s</div></a>" % (type, title)
-    yield "<div class='%s status %s'>%s</div>" % (type, status, status)
+    yield "<div class='%s status %s' style='position:absolute;right:25px'>%s</div>" % (type, status, status)
     yield "<div class='%s output' id='output-%s'>" % (type, id)
     if output:
         yield "<pre>%s</pre>" % (output,)
@@ -488,7 +488,7 @@ class ViewBuildPage(BuildFarmPage):
             yield "<tr><td>CFLAGS:</td><td>%s</td></tr>\n" % cflags
         if config is not None:
             yield "<tr><td>configure options:</td><td>%s</td></tr>\n" % config
-        yield "</table>\n"
+        yield "</table><br>"
 
         yield "".join(self.show_oldrevs(myself, build, build.host, build.compiler, limit))
 
@@ -524,7 +524,7 @@ class ViewBuildPage(BuildFarmPage):
                 yield "<h2>No error log available</h2>\n"
             else:
                 yield "<h2>Error log:</h2>"
-                yield "".join(make_collapsible_html('action', "Error Output", "\n%s" % err, "stderr-0", "errorlog"))
+                yield "".join(make_collapsible_html('action', "Error Output", "\n%s<br>" % err, "stderr-0", "errorlog"))
 
             if log is None:
                 yield "<h2>No build log available</h2>"
@@ -1015,6 +1015,7 @@ class BuildFarmApp(object):
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "menu_contact_samba_closed.html")
         yield util.FileLoad(os.path.join(webdir, "bannernav2.html"))
         yield "".join(lines)
+        yield "<br><br>"
         yield util.SambaWebFileLoad(os.path.join(webdir, "samba-web"), "footer.html")
         yield util.FileLoad(os.path.join(webdir, "closingtags.html"))
 
