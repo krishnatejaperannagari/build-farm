@@ -114,6 +114,7 @@ def test_suite():
         'test_hostdb',
         'test_sqldb',
         'test_util',
+        'test_mail',
         ]
     module_names = ['buildfarm.tests.' + name for name in names]
     result = unittest.TestSuite()
